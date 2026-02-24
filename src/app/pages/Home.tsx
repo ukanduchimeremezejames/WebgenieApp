@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -26,6 +27,7 @@ import {
 import { Button } from './Button';
 
 export function Home() {
+
   const navigate = useNavigate();
 
   const features = [
@@ -158,14 +160,47 @@ export function Home() {
     }
   ];
 
-  // ---- Start Rendering ----
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!email) {
+      setMessage("Please enter a valid email.");
+      return;
+    }
+
+    try {
+
+      
+      const response = await fetch("https://ukandu-email-handler.hf.space/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": "supersecretkey"
+        },
+        body: JSON.stringify({ email })
+      });
+      
+      if (response.ok) {
+        setMessage("Successfully subscribed!");
+        setEmail("");
+      } else {
+        setMessage("Something went wrong. Try again.");
+      }
+    } catch (error) {
+      setMessage("Server error. Try again later.");
+    }
+  };
+
+
   return (
     <div className="min-h-screen">
 
-      {/* -------------------- Original Home Hero -------------------- */}
       <section className="relative overflow-hidden border-b">
         <div className="mx-auto container px-4 py-24 grid md:grid-cols-1 lg:grid-cols-2 gap-12">
-  {/* Left: Intro + Steps */}
+
   <div className="max-w-3xl mx-auto text-center lg:text-left space-y-8">
     <h1 className="text-5xl font-bold mb-6">
       Benchmark Gene Regulatory
@@ -178,7 +213,7 @@ export function Home() {
       gene regulatory network inference algorithms on single-cell data.
     </p>
 
-    {/* Cards Section: 3 cards in a row on lg screens */}
+  
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {[
         {
@@ -207,8 +242,7 @@ export function Home() {
       ))}
     </div>
 
-    {/* Action Buttons */}
-    {/* <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mt-8"> */}
+    
     <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mt-8">
 
       <Link
@@ -498,20 +532,38 @@ export function Home() {
                 <li><a href="https://github.com/ukanduchimeremezejames/WebgenieDark" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h5 className="text-white mb-4">Subscribe</h5>
-              <p className="text-sm text-gray-400 mb-2">Get updates about new datasets and algorithms</p>
-              <form className="flex gap-2">
-                <input type="email" placeholder="Email" className="flex-1 p-2 rounded-lg border border-gray-700 bg-gray-800 text-white text-sm" />
-                <button type="submit" className="px-4 py-2 bg-primary rounded-lg text-white text-sm hover:bg-purple-700 transition-colors">Subscribe</button>
+              <p className="text-sm text-gray-400 mb-2">
+                Get updates about new datasets and algorithms
+              </p>
+
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 p-2 rounded-lg border border-gray-700 bg-gray-800 text-white text-sm"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary rounded-lg text-white text-sm hover:bg-purple-700 transition-colors"
+                >
+                  Subscribe
+                </button>
               </form>
+
+              {message && (
+                <p className="text-sm text-green-400 mt-2">{message}</p>
+              )}
             </div>
+            
+           
           </div>
-          
-          {/* <div className="border-t border-gray-700 pt-6 text-center text-sm">
-            © 2026 WebGenie | Built on the BEELINE Platform. All rights reserved.
-          </div> */}
+         
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
             <p>© 2026 WebGenie Platform. Licensed under MIT. All rights reserved.</p>
             <p className="flex items-center gap-2">

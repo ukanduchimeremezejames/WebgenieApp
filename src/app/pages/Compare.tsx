@@ -27,7 +27,7 @@ const downloadRocGraph = async () => {
   const chartContainer = document.querySelector('.roc-chart-container .recharts-wrapper');
   if (!chartContainer) return;
 
-  const scale = 3; // Increase to 4 for ultra HD
+  const scale = 3; 
 
   const canvas = await html2canvas(chartContainer, {
     scale,
@@ -49,12 +49,12 @@ const downloadPrcGraph = async () => {
   const chartContainer = document.querySelector('.prc-chart-container .recharts-wrapper');
   if (!chartContainer) return;
 
-  const scale = 3; // Increase this to 4 for ultra HD
+  const scale = 3; 
 
   const canvas = await html2canvas(chartContainer, {
     scale,
     useCORS: true,
-    backgroundColor: null, // keeps transparency if needed
+    backgroundColor: null, 
     logging: false,
     allowTaint: true
   });
@@ -165,169 +165,6 @@ const algorithms = [
   { name: 'SINGE',       color: '#e879f9', selected: false },
 ];
 
-
-const prData = Array.from({ length: 20 }, (_, i) => ({
-  recall: i / 20,
-  GENIE3: 0.95 - i * 0.04,
-  GRNBoost2: 0.90 - i * 0.037,
-  SCENIC: 0.88 - i * 0.035,
-  GRNVBEM: 0.82 - i * 0.036,
-  PIDC: 0.78 - i * 0.032,
-  SCODE: 0.85 - i * 0.038,
-  ARBORETO: 0.80 - i * 0.033,
-  SCNS: 0.76 - i * 0.031,
-  LEAP: 0.79 - i * 0.034,
-  GRNVBEM: 0.77 - i * 0.032,
-  ARACNE: 0.75 - i * 0.03,
-  LEAP: 0.81 - i * 0.035,
-  Spearman: 0.74 - i * 0.03,
-  SCINGE: 0.78 - i * 0.032,
-  SCNS: 0.73 - i * 0.029,
-  SCODE: 0.76 - i * 0.031,
-  Pearson: 0.72 - i * 0.028,
-  GRISLI: 0.71 - i * 0.027,
-  SINGE: 0.70 - i * 0.026,
-}));
-
-const rocData = Array.from({ length: 20 }, (_, i) => ({
-  fpr: i / 20,
-  GENIE3: 0.5 + i * 0.025,
-  GRNBoost2: 0.48 + i * 0.024,
-  SCENIC: 0.46 + i * 0.023,
-  GRNVBEM: 0.44 + i * 0.022,
-  PIDC: 0.42 + i * 0.021,
-  SCODE: 0.40 + i * 0.020,
-  ARBORETO: 0.38 + i * 0.019,
-  SCNS: 0.36 + i * 0.018,
-  LEAP: 0.35 + i * 0.017,
-  GRNVBEM: 0.34 + i * 0.016,
-  ARACNE: 0.33 + i * 0.015,
-  LEAP: 0.32 + i * 0.014,
-  Spearman: 0.31 + i * 0.013,
-  SCINGE: 0.30 + i * 0.012,
-  SCNS: 0.29 + i * 0.011,
-  SCODE: 0.28 + i * 0.010,
-  Pearson: 0.27 + i * 0.009,
-  GRISLI: 0.26 + i * 0.008,
-  SINGE: 0.25 + i * 0.007,
-}));
-
-
-const enrichmentData = [
-  {
-    category: 'GO:0000',
-    GENIE3: 850,
-    GRNBoost2: 720,
-    SCENIC: 680,
-    GRNVBEM: 650,
-    PIDC: 620,
-    SCODE: 590,
-    ARBORETO: 560,
-    SCNS: 540,
-    LEAP: 530,
-    GRNVBEM: 520,
-    ARACNE: 500,
-    LEAP: 510,
-    Spearman: 495,
-    SCINGE: 480,
-    SCNS: 470,
-    SCODE: 460,
-    Pearson: 450,
-    GRISLI: 440,
-    SINGE: 430,
-  },
-  {
-    category: 'OCT4',
-    GENIE3: 725,
-    GRNBoost2: 680,
-    SCENIC: 650,
-    GRNVBEM: 620,
-    PIDC: 600,
-    SCODE: 580,
-    ARBORETO: 560,
-    SCNS: 540,
-    LEAP: 520,
-    GRNVBEM: 510,
-    ARACNE: 500,
-    LEAP: 490,
-    Spearman: 480,
-    SCINGE: 470,
-    SCNS: 460,
-    SCODE: 450,
-    Pearson: 440,
-    GRISLI: 430,
-    SINGE: 420,
-  },
-  {
-    category: 'NANOG',
-    GENIE3: 650,
-    GRNBoost2: 590,
-    SCENIC: 570,
-    GRNVBEM: 550,
-    PIDC: 530,
-    SCODE: 510,
-    ARBORETO: 500,
-    SCNS: 490,
-    LEAP: 480,
-    GRNVBEM: 470,
-    ARACNE: 460,
-    LEAP: 450,
-    Spearman: 440,
-    SCINGE: 430,
-    SCNS: 420,
-    SCODE: 410,
-    Pearson: 400,
-    GRISLI: 390,
-    SINGE: 380,
-  },
-  {
-    category: 'E2F7',
-    GENIE3: 580,
-    GRNBoost2: 520,
-    SCENIC: 500,
-    GRNVBEM: 480,
-    PIDC: 460,
-    SCODE: 440,
-    ARBORETO: 430,
-    SCNS: 420,
-    LEAP: 410,
-    GRNVBEM: 400,
-    ARACNE: 390,
-    LEAP: 380,
-    Spearman: 370,
-    SCINGE: 360,
-    SCNS: 350,
-    SCODE: 340,
-    Pearson: 330,
-    GRISLI: 320,
-    SINGE: 310,
-  },
-  {
-    category: 'MYC',
-    GENIE3: 450,
-    GRNBoost2: 480,
-    SCENIC: 470,
-    GRNVBEM: 460,
-    PIDC: 450,
-    SCODE: 440,
-    ARBORETO: 430,
-    SCNS: 420,
-    LEAP: 410,
-    GRNVBEM: 400,
-    ARACNE: 390,
-    LEAP: 380,
-    Spearman: 370,
-    SCINGE: 360,
-    SCNS: 350,
-    SCODE: 340,
-    Pearson: 330,
-    GRISLI: 320,
-    SINGE: 310,
-  },
-];
-
-
-
 const similarityData = [
   { pair: 'GENIE3 — GRNBoost2', similarity: 0.82, color: '#A970FF' },
   { pair: 'GENIE3 — SINGE', similarity: 0.76, color: '#60a5fa' },
@@ -362,192 +199,93 @@ const similarityData = [
 ];
 
 
-const metricsData = [
-  {
-    algorithm: 'GENIE3',
-    auroc: 0.847,
-    auprc: 0.753,
-    f1: 0.782,
-    precision: 0.821,
-    recall: 0.746,
-    earlyPrecision: 0.851,
-  },
-  {
-    algorithm: 'GRNBoost2',
-    auroc: 0.803,
-    auprc: 0.681,
-    f1: 0.756,
-    precision: 0.798,
-    recall: 0.718,
-    earlyPrecision: 0.867,
-  },
-  {
-    algorithm: 'SCENIC',
-    auroc: 0.769,
-    auprc: 0.678,
-    f1: 0.741,
-    precision: 0.776,
-    recall: 0.709,
-    earlyPrecision: 0.824,
-  },
-  {
-    algorithm: 'GRNVBEM',
-    auroc: 0.734,
-    auprc: 0.698,
-    f1: 0.721,
-    precision: 0.741,
-    recall: 0.689,
-    earlyPrecision: 0.801,
-  },
-  {
-    algorithm: 'PIDC',
-    auroc: 0.691,
-    auprc: 0.612,
-    f1: 0.668,
-    precision: 0.701,
-    recall: 0.612,
-    earlyPrecision: 0.778,
-  },
-  {
-    algorithm: 'SCODE',
-    auroc: 0.612,
-    auprc: 0.789,
-    f1: 0.553,
-    precision: 0.648,
-    recall: 0.559,
-    earlyPrecision: 0.723,
-  },
-
-  {
-    algorithm: 'ARBORETO',
-    auroc: 0.768,
-    auprc: 0.603,
-    f1: 0.644,
-    precision: 0.702,
-    recall: 0.598,
-    earlyPrecision: 0.782,
-  },
-  {
-    algorithm: 'SCNS',
-    auroc: 0.652,
-    auprc: 0.557,
-    f1: 0.583,
-    precision: 0.611,
-    recall: 0.552,
-    earlyPrecision: 0.721,
-  },
-  {
-    algorithm: 'LEAP',
-    auroc: 0.712,
-    auprc: 0.612,
-    f1: 0.639,
-    precision: 0.664,
-    recall: 0.601,
-    earlyPrecision: 0.765,
-  },
-  {
-    algorithm: 'GRNVBEM',
-    auroc: 0.735,
-    auprc: 0.634,
-    f1: 0.658,
-    precision: 0.683,
-    recall: 0.628,
-    earlyPrecision: 0.792,
-  },
-  {
-    algorithm: 'ARACNE',
-    auroc: 0.683,
-    auprc: 0.505,
-    f1: 0.558,
-    precision: 0.587,
-    recall: 0.531,
-    earlyPrecision: 0.673,
-  },
-  {
-    algorithm: 'LEAP',
-    auroc: 0.743,
-    auprc: 0.622,
-    f1: 0.651,
-    precision: 0.674,
-    recall: 0.618,
-    earlyPrecision: 0.801,
-  },
-  {
-    algorithm: 'Spearman',
-    auroc: 0.677,
-    auprc: 0.532,
-    f1: 0.569,
-    precision: 0.599,
-    recall: 0.545,
-    earlyPrecision: 0.702,
-  },
-  {
-    algorithm: 'SCINGE',
-    auroc: 0.754,
-    auprc: 0.671,
-    f1: 0.702,
-    precision: 0.731,
-    recall: 0.669,
-    earlyPrecision: 0.844,
-  },
-  {
-    algorithm: 'SCNS',
-    auroc: 0.708,
-    auprc: 0.588,
-    f1: 0.622,
-    precision: 0.655,
-    recall: 0.594,
-    earlyPrecision: 0.755,
-  },
-  {
-    algorithm: 'SCODE',
-    auroc: 0.721,
-    auprc: 0.561,
-    f1: 0.601,
-    precision: 0.628,
-    recall: 0.575,
-    earlyPrecision: 0.733,
-  },
-  {
-    algorithm: 'Pearson',
-    auroc: 0.691,
-    auprc: 0.577,
-    f1: 0.613,
-    precision: 0.642,
-    recall: 0.586,
-    earlyPrecision: 0.748,
-  },
-  {
-    algorithm: 'GRISLI',
-    auroc: 0.764,
-    auprc: 0.643,
-    f1: 0.674,
-    precision: 0.698,
-    recall: 0.646,
-    earlyPrecision: 0.812,
-  },
-  {
-    algorithm: 'SINGE',
-    auroc: 0.728,
-    auprc: 0.602,
-    f1: 0.646,
-    precision: 0.668,
-    recall: 0.612,
-    earlyPrecision: 0.795,
-  },
-];
-
-
-const motifEnrichmentData = [
-  { motif: 'SOX2', enrichment: 8.4 },
-  { motif: 'OCT4', enrichment: 7.2 },
-  { motif: 'NANOG', enrichment: 6.8 },
-  { motif: 'KLF4', enrichment: 5.9 },
-  { motif: 'MYC', enrichment: 4.7 }
-];
-
 export function Compare() {
-  const [selectedAlgorithms, setSelectedAlgorithms] = useState<string[]>(['alg1', 'alg3', 'alg6', 'alg9', 'alg12', 'alg13']);
+
+  const datasets = [
+  {
+    id: 'hESC',
+    label: 'hESC',
+    data: [
+      { motif: 'SOX2', enrichment: 8.4 },
+      { motif: 'OCT4', enrichment: 7.2 },
+      { motif: 'NANOG', enrichment: 6.8 },
+      { motif: 'KLF4', enrichment: 5.9 },
+      { motif: 'MYC', enrichment: 4.7 }
+    ]
+  },
+  {
+    id: 'GSD',
+    label: 'GSD',
+    data: [
+      { motif: 'SRY', enrichment: 8.9 },
+      { motif: 'SOX9', enrichment: 8.1 },
+      { motif: 'SF1', enrichment: 7.4 },
+      { motif: 'WT1', enrichment: 6.8 },
+      { motif: 'FOXL2', enrichment: 5.95 }
+    ]
+  },
+  {
+    id: 'HSC',
+    label: 'HSC',
+    data: [
+      { motif: 'GATA2', enrichment: 8.75 },
+      { motif: 'RUNX1', enrichment: 8.1 },
+      { motif: 'SPI1', enrichment: 7.6 },
+      { motif: 'TAL1', enrichment: 7.1 },
+      { motif: 'GATA1', enrichment: 6.85 }
+    ]
+  },
+  {
+    id: 'dyn-LI',
+    label: 'dyn-LI',
+    data: [
+      { motif: 'G1', enrichment: 8.5 },
+      { motif: 'G2', enrichment: 7.8 },
+      { motif: 'G3', enrichment: 6.9 },
+      { motif: 'G4', enrichment: 6.1 },
+      { motif: 'G5', enrichment: 5.4 }
+    ]
+  },
+  {
+    id: 'dyn-BF',
+    label: 'dyn-BF',
+    data: [
+      { motif: 'G1', enrichment: 8.7 },
+      { motif: 'G2', enrichment: 7.9 },
+      { motif: 'G3A', enrichment: 6.8 },
+      { motif: 'G3B', enrichment: 6.75 },
+      { motif: 'G4', enrichment: 5.6 }
+    ]
+  },
+  {
+    id: 'dyn-BFC',
+    label: 'dyn-BFC',
+    data: [
+      { motif: 'G1', enrichment: 8.6 },
+      { motif: 'G2', enrichment: 7.85 },
+      { motif: 'G3A', enrichment: 6.9 },
+      { motif: 'G3B', enrichment: 6.85 },
+      { motif: 'G5', enrichment: 5.95 }
+    ]
+  }
+];
+
+const [currentIndex, setCurrentIndex] = React.useState(0);
+
+const nextDataset = () => {
+  setCurrentIndex((prev) => (prev + 1) % datasets.length);
+};
+
+const prevDataset = () => {
+  setCurrentIndex((prev) =>
+    prev === 0 ? datasets.length - 1 : prev - 1
+  );
+};
+
+const motifEnrichmentData = datasets[currentIndex].data;
+
+
+  const [selectedAlgorithms, setSelectedAlgorithms] = useState<string[]>(['alg1', 'alg4', 'alg6', 'alg7', 'alg9', 'alg12']);
 
   const toggleAlgorithm = (algId: string) => {
     setSelectedAlgorithms(prev =>
@@ -607,35 +345,6 @@ export function Compare() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-foreground">Select Algorithms to Compare</h3>
-            {/* <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={selectAll}>
-                Select All
-              </Button>
-              <Button variant="outline" size="sm" onClick={deselectAll}>
-                Deselect All
-              </Button>
-            </div> */}
-            {/* <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => exportCSV(selectedMetrics)}
-              >
-                <FileDown className="w-4 h-4" />
-                Export CSV
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => exportPDF(selectedMetrics)}
-              >
-                <Download className="w-4 h-4" />
-                Export PDF
-              </Button>
-            </div> */}
 
             <div className="flex gap-2">
               <Button
@@ -700,74 +409,6 @@ export function Compare() {
         </div>
       </Card>
 
-        {/* Performance Metrics Table */}
-        {/* <div className="mb-6 p-6 rounded-lg border bg-card">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="font-semibold mb-1">Performance Metrics</h2>
-              <p className="text-sm text-muted-foreground">
-                Comparing performance across all metrics
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button className="flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg hover:bg-accent">
-                <FileDown className="w-4 h-4" />
-                CSV
-              </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg hover:bg-accent">
-                <FileDown className="w-4 h-4" />
-                PDF
-              </button>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Algorithm
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    AUROC
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    AUPRC
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    F1 Score
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Precision
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Recall
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Early Precision
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {metricsData.map((metric) => (
-                  <tr key={metric.algorithm} className="border-b last:border-0 hover:bg-accent/50">
-                    <td className="py-3 px-4 font-medium">{metric.algorithm}</td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">{metric.auroc}</td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">{metric.auprc}</td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">{metric.f1}</td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">{metric.precision}</td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">{metric.recall}</td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {metric.earlyPrecision}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div> */}
-
-        
       {/* Performance Metrics Table */}
       {selectedMetrics.length > 0 && (
         <Card id="metrics" className='mt-5 px-5 pb-5'>
@@ -971,104 +612,40 @@ export function Compare() {
         </Card>
       )}
 
-        {/* Charts */}
-        {/* <div className="grid lg:grid-cols-2 gap-6 mb-6"> */}
-          {/* PR Curves */}
-          {/* <div className="p-6 rounded-lg border bg-card">
-            <div className="mb-6">
-              <h2 className="font-semibold mb-1">Precision-Recall Curves</h2>
-              <p className="text-sm text-muted-foreground">Multi-algorithm overlay</p>
-            </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={prData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis
-                    dataKey="recall"
-                    label={{ value: 'Recall', position: 'insideBottom', offset: -5 }}
-                    tick={{ fill: 'var(--color-muted-foreground)' }}
-                  />
-                  <YAxis
-                    label={{ value: 'Precision', angle: -90, position: 'insideLeft' }}
-                    tick={{ fill: 'var(--color-muted-foreground)' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-card)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '0.5rem',
-                    }}
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="GENIE3" stroke="#A970FF" strokeWidth={2} />
-                  <Line type="monotone" dataKey="SCODE" stroke="#60a5fa" strokeWidth={2} />
-                  <Line
-                    type="monotone"
-                    dataKey="GRNVBEM"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div> */}
-
-          {/* ROC Curves */}
-          {/* <div className="p-6 rounded-lg border bg-card">
-            <div className="mb-6">
-              <h2 className="font-semibold mb-1">ROC Curves</h2>
-              <p className="text-sm text-muted-foreground">Receiver operating characteristic</p>
-            </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={rocData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis
-                    dataKey="fpr"
-                    label={{ value: 'False Positive Rate', position: 'insideBottom', offset: -5 }}
-                    tick={{ fill: 'var(--color-muted-foreground)' }}
-                  />
-                  <YAxis
-                    label={{ value: 'True Positive Rate', angle: -90, position: 'insideLeft' }}
-                    tick={{ fill: 'var(--color-muted-foreground)' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-card)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '0.5rem',
-                    }}
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="GENIE3" stroke="#A970FF" strokeWidth={2} />
-                  <Line type="monotone" dataKey="SCODE" stroke="#60a5fa" strokeWidth={2} />
-                  <Line
-                    type="monotone"
-                    dataKey="GRNVBEM"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div> */}
-
         {/* Additional Charts */}
         <div id="enrichment" className="grid lg:grid-cols-2 gap-6 py-5">
           {/* Enrichment */}
-<div className="p-6 rounded-lg border bg-card h-[400px] overflow-y-auto scrollbar-thin">
-  <div className="mb-6">
-    <h2 className="font-semibold mb-1">Top Motif Enrichment</h2>
-    <p className="text-sm text-muted-foreground">
-      Transcription factor binding site enrichment
-    </p>
+
+          <div className="p-6 rounded-lg border bg-card h-[400px] overflow-y-auto scrollbar-thin">
+
+  {/* Header with dataset switcher */}
+  <div className="mb-6 flex items-center justify-between">
+    <div>
+      <h2 className="font-semibold mb-1">Top Motif Enrichment</h2>
+      <p className="text-sm text-muted-foreground">
+        {datasets[currentIndex].label} dataset
+      </p>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <button
+        onClick={prevDataset}
+        className="px-3 py-1 rounded border hover:bg-accent transition"
+      >
+        ←
+      </button>
+      <button
+        onClick={nextDataset}
+        className="px-3 py-1 rounded border hover:bg-accent transition"
+      >
+        →
+      </button>
+    </div>
   </div>
 
-  {Array.isArray(motifEnrichmentData) && motifEnrichmentData.length > 0 ? (
+  {motifEnrichmentData.length > 0 ? (
     <div className="space-y-4">
       {(() => {
-        // ✅ compute once, safely
         const maxEnrichment = Math.max(
           ...motifEnrichmentData.map(d => d.enrichment ?? 0),
           1
@@ -1121,34 +698,7 @@ export function Compare() {
     </p>
   )}
 </div>
-
-          {/* Enrichment */}
-          {/* <div className="p-6 rounded-lg border bg-card">
-            <div className="mb-6">
-              <h2 className="font-semibold mb-1">Top Motif Enrichment</h2>
-              <p className="text-sm text-muted-foreground">
-                Transcription factor binding site enrichment
-              </p>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={motifEnrichmentData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis type="number" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
-              <YAxis dataKey="motif" type="category" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '8px'
-                }}
-              />
-              <Bar dataKey="enrichment" fill="var(--color-secondary)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-            </div>
-          </div> */}
-
+      
           {/* Similarity */}
           <div className="p-6 rounded-lg border bg-card h-[400px] overflow-y-auto scrollbar-thin">
             <div className="mb-6">
@@ -1185,61 +735,6 @@ export function Compare() {
           </div>
         </div>
       </div>
-
-      {/* -------------------- LANDINGPAGE FOOTER -------------------- */}
-      {/* <footer className="bg-gray-900 text-gray-300 py-12 mt-10">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="text-white">WebGenie</div>
-                  <div className="text-xs text-gray-400">Benchmarking Platform</div>
-                </div>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Research-grade GRN inference benchmarking and visualization for evaluating
-              gene regulatory network inference algorithms on single-cell data.
-              </p>
-            </div>
-            
-            <div>
-              <h5 className="text-white mb-4">Platform</h5>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a></li>
-                <li><a href="/datasets" className="hover:text-white transition-colors">Datasets</a></li>
-                <li><a href="/compare" className="hover:text-white transition-colors">Algorithms</a></li>
-                <li><a href="/upload" className="hover:text-white transition-colors">Upload</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h5 className="text-white mb-4">Resources</h5>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="https://github.com/Murali-group/Beeline" className="hover:text-white transition-colors">GitHub</a></li>
-                <li><a href="https://github.com/ukanduchimeremezejames/WebgenieDark" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h5 className="text-white mb-4">SubPearson</h5>
-              <p className="text-sm text-gray-400 mb-2">Get updates about new datasets and algorithms</p>
-              <form className="flex gap-2">
-                <input type="email" placeholder="Email" className="flex-1 p-2 rounded-lg border border-gray-700 bg-gray-800 text-white text-sm" />
-                <button type="submit" className="px-4 py-2 bg-purple-600 rounded-lg text-white text-sm hover:bg-purple-700 transition-colors">SubPearson</button>
-              </form>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-700 pt-6 text-center text-sm">
-            © 2026 WebGenie | Built on the BEELINE Platform. All rights reserved.
-          </div>
-        </div>
-      </footer> */}
 
       {/* Footer */}
       <footer className="border-t bg-background mt-12">

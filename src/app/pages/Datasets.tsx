@@ -559,7 +559,7 @@ export function Datasets() {
 
   useEffect(() => {
   const storedRuns = localStorage.getItem("totalRuns");
-  const currentRuns = storedRuns ? parseInt(storedRuns, 10) : 0;
+  const currentRuns = storedRuns ? parseInt(storedRuns, 10) : 195;
 
   const updatedRuns = currentRuns + 1;
 

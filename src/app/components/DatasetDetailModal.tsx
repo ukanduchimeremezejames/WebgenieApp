@@ -37,8 +37,18 @@ export function DatasetDetailModal({ dataset, open, onOpenChange }: DatasetDetai
     if (!dataset) return;
 
     if (format === 'json') {
-      downloadFile(JSON.stringify(dataset, null, 2), `${dataset.name}.json`, 'application/json');
+      const { sparklineData, ...exportData } = dataset;
+
+      downloadFile(
+        JSON.stringify(exportData, null, 2),
+        `${dataset.name}.json`,
+        'application/json'
+      );
     }
+
+    // if (format === 'json') {
+    //   downloadFile(JSON.stringify(dataset, null, 2), `${dataset.name}.json`, 'application/json');
+    // }
 
     if (format === 'csv') {
       // Simple CSV with main fields
@@ -60,8 +70,13 @@ export function DatasetDetailModal({ dataset, open, onOpenChange }: DatasetDetai
   };
 
   const handleHuggingFaceDownload = () => {
-    window.open('https://huggingface.co/cskokgibbs/datasets', '_blank');
+    window.open('https://zenodo.org/records/3701939', '_blank');
   };
+
+  const shuffleTwo = () =>
+  ["Activation", "Repression"][Math.floor(Math.random() * 2)];
+
+const value = shuffleTwo();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -138,11 +153,11 @@ export function DatasetDetailModal({ dataset, open, onOpenChange }: DatasetDetai
                 <span className="text-muted">Target</span>
                 <span className="text-muted">Type</span>
               </div>
-              {['GENE1 → GENE2 (Activation)', 'GENE2 → GENE3 (Repression)', 'GENE3 → GENE4 (Unknown)'].map((edge, i) => (
+            {['GENE1 → GENE2 ({value})', 'GENE2 → GENE3 ({value})'].map((edge, i) => (
                 <div key={i} className="grid grid-cols-3 gap-2 text-xs py-1">
                   <span className="text-foreground">{edge.split(' ')[0]}</span>
                   <span className="text-foreground">{edge.split(' ')[2]}</span>
-                  <span className="text-foreground">{edge.split(' ')[3]}</span>
+                  <span className="text-foreground">{edge.split(' ')[3].replace('{value}', value)}</span>
                 </div>
               ))}
               <p className="text-xs text-muted mt-2">

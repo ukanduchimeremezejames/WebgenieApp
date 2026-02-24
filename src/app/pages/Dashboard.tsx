@@ -11,18 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { DatasetDetailModal } from '../components/DatasetDetailModal';
 import { Search, ArrowUpDown, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { mockDatasets2, mockAlgorithms, mockJobs, getAUPRCDistributionData } from '../components/mockData';
+import { mockDatasets2, mockAlgorithms, mockJobs, getAUPRCDistributionData, allDatasets } from '../components/mockData';
 import { Dataset } from '../types';
 
 
-interface RecentResult {
-  id: number;
-  dataset: string;
-  algorithm: string;
-  auroc: string;
-  auprc: string;
-  status: 'completed' | 'failed';
-  date: string;
+type RecentResult = {
+  id: string
+  dataset: string
+  algorithm: string
+  auroc: string
+  auprc: string
+  status: string
+  createdAt: number  
 }
 
 interface AlgorithmMetrics {
@@ -33,72 +33,98 @@ interface AlgorithmMetrics {
   runtime: number;
 }
 
-
-const performanceData = [
-  { algorithm: 'GENIE3', score: 0.847 },
-  { algorithm: 'GRNBoost2', score: 0.803 },
-  { algorithm: 'SCENIC', score: 0.769 },
-  { algorithm: 'SINCERITIES', score: 0.734 },
-  { algorithm: 'PIDC', score: 0.691 },
-  { algorithm: 'PPCOR', score: 0.612 },
-];
-
-const recentResults = [
-  {
-    id: 1,
-    dataset: 'HSC_Synthetic_100',
-    algorithm: 'GENIE3',
-    auroc: '0.847',
-    auprc: '0.763',
-    status: 'completed',
-    date: '2h ago',
-  },
-  {
-    id: 2,
-    dataset: 'mESC_hematopoietic',
-    algorithm: 'GRNBoost2',
-    auroc: '0.803',
-    auprc: '0.721',
-    status: 'completed',
-    date: '5h ago',
-  },
-  {
-    id: 3,
-    dataset: 'hESC_definitive_endoderm',
-    algorithm: 'SCENIC',
-    auroc: '0.769',
-    auprc: '0.678',
-    status: 'completed',
-    date: '1d ago',
-  },
-];
-
-const algorithmComparison = [
-  { algorithm: 'GENIE3', auroc: 0.847, auprc: 0.763, f1: 0.782, runtime: 45 },
-  { algorithm: 'GRNBoost2', auroc: 0.803, auprc: 0.721, f1: 0.756, runtime: 38 },
-  { algorithm: 'SCENIC', auroc: 0.769, auprc: 0.678, f1: 0.741, runtime: 92 },
-  { algorithm: 'SINCERITIES', auroc: 0.734, auprc: 0.638, f1: 0.721, runtime: 156 },
-  { algorithm: 'PIDC', auroc: 0.691, auprc: 0.612, f1: 0.668, runtime: 28 },
-  { algorithm: 'PPCOR', auroc: 0.612, auprc: 0.553, f1: 0.601, runtime: 21 },
-];
-
 export function Dashboard() {
 
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('auprc');
-  const [sizeRange, setSizeRange] = useState([0, 3000]);
+  const [sizeRange, setSizeRange] = useState([0, 100]);
   const [selectedOrganism, setSelectedOrganism] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [recentResults, setRecentResults] = useState<RecentResult[]>([]);
-  const totalGenes = mockDatasets2.reduce((sum, ds) => sum + ds.genes, 0);
-  const totalCells = mockDatasets2.reduce((sum, ds) => sum + ds.cells, 0);
-  const totalEdges = mockDatasets2.reduce((sum, ds) => sum + ds.edges, 0);
+  const totalGenes = allDatasets.reduce((sum, ds) => sum + ds.genes, 0);
+  const totalCells = allDatasets.reduce((sum, ds) => sum + ds.cells, 0);
+  const totalEdges = allDatasets.reduce((sum, ds) => sum + ds.edges, 0);
 
   const handleViewDetails = (dataset: Dataset) => {
     setSelectedDataset(dataset);
     setModalOpen(true);
   };
+
+  const formatMinutesAgo = (date?: number) => {
+  if (!date || isNaN(date)) return 'just now';
+
+  const diffMs = Date.now() - date;
+  const diffMins = Math.floor(diffMs / 60000);
+
+  return diffMins <= 0 ? 'just now' : `${diffMins}m ago`;
+};
+
+const generateSingleResult = (): RecentResult => {
+  const dataset =
+    mockDatasets2[Math.floor(Math.random() * mockDatasets2.length)].name;
+
+  const algorithm =
+    mockAlgorithms[Math.floor(Math.random() * mockAlgorithms.length)].name;
+
+  const auroc = (Math.random() * 0.2 + 0.6).toFixed(3);
+  const auprc = (Math.random() * 0.2 + 0.55).toFixed(3);
+
+  return {
+  id: crypto.randomUUID(),
+  dataset,
+  algorithm,
+  auroc,
+  auprc,
+  status: 'completed',
+  createdAt: Date.now(),
+};
+};
+
+useEffect(() => {
+  const initialResults = Array.from({ length: 6 }, () =>
+    generateSingleResult()
+  );
+
+  setRecentResults(initialResults);
+}, []);
+
+useEffect(() => {
+  let timeout: ReturnType<typeof setTimeout>;
+
+  const scheduleNext = () => {
+    const randomDelay =
+      (Math.floor(Math.random() * 11) + 5) * 60 * 1000; // 5–15 minutes
+
+    timeout = setTimeout(() => {
+      setRecentResults((prev) => {
+        const updated = [
+          generateSingleResult(),
+          ...prev,
+        ].slice(0, 6);
+
+        return updated;
+      });
+
+      scheduleNext();
+    }, randomDelay);
+  };
+
+  scheduleNext();
+
+  return () => clearTimeout(timeout);
+}, []);
+
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    setRecentResults((prev) => [...prev]);
+  }, 60 * 1000);
+
+  return () => clearInterval(interval);
+}, []);
+
+
 
   // Function to generate random results
   const generateRecentResults = () => {
@@ -158,16 +184,12 @@ export function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // const handleDownload = (dataset: Dataset) => {
-
-  //   console.log('Downloading dataset:', dataset.name);
-  // };
 
   const handleDownload = (dataset: Dataset) => {
   console.log("Downloading dataset:", dataset.name);
 
   // open link in a new tab
-  window.open("https://huggingface.co/cskokgibbs/datasets", "_blank");
+  window.open("https://zenodo.org/records/3701939", "_blank");
 };
 
 
@@ -180,6 +202,51 @@ export function Dashboard() {
     const matchesSize = ds.genes >= sizeRange[0] && ds.genes <= sizeRange[1];
     return matchesOrganism && matchesType && matchesSize;
   });
+
+  const [totalRuns, setTotalRuns] = useState(0);
+
+  useEffect(() => {
+  const storedRuns = localStorage.getItem("totalRuns");
+  const currentRuns = storedRuns ? parseInt(storedRuns, 10) : 195;
+
+  const updatedRuns = currentRuns + 1;
+
+  localStorage.setItem("totalRuns", updatedRuns.toString());
+  setTotalRuns(updatedRuns);
+}, []);
+
+
+
+useEffect(() => {
+  const stored = localStorage.getItem("recentResults");
+
+  if (stored) {
+    setRecentResults(JSON.parse(stored));
+    return;
+  }
+
+
+  // Generate 6 results spaced 3–20 mins apart in the past
+  const initialResults = Array.from({ length: 6 }, (_, index) => {
+    const minutesAgo = (index + 1) * (Math.floor(Math.random() * 5) + 3);
+    const result = generateSingleResult();
+    return {
+      ...result,
+      createdAt: Date.now() - minutesAgo * 60 * 1000,
+    };
+  });
+
+  setRecentResults(initialResults);
+  localStorage.setItem("recentResults", JSON.stringify(initialResults));
+}, []);
+
+useEffect(() => {
+  if (recentResults.length > 0) {
+    localStorage.setItem("recentResults", JSON.stringify(recentResults));
+  }
+}, [recentResults]);
+
+
   
 
   return (
@@ -198,7 +265,7 @@ export function Dashboard() {
         <KPICard
           icon={Database}
           title="Total Datasets"
-          value={mockDatasets2.length}
+          value={allDatasets.length}
           description="BEELINE benchmark datasets"
           gradient="from-purple-50 to-purple-100"
         />
@@ -212,7 +279,7 @@ export function Dashboard() {
         <KPICard
           icon={Play}
           title="Total Runs"
-          value={mockJobs.length}
+          value={totalRuns}
           description="Algorithm executions"
           gradient="from-blue-50 to-blue-100"
         />
@@ -236,7 +303,7 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-foreground">Performance Metrics Distribution</h3>
-                <p className="text-sm text-muted-foreground">Algorithm comparison across datasets</p>
+                <p className="text-sm text-muted-foreground">Algorithm comparison for each dataset computed as a mean across all datasets</p>
               </div>
               <Select value={selectedMetric} onValueChange={setSelectedMetric}>
                 <SelectTrigger className="w-32">
@@ -268,11 +335,7 @@ export function Dashboard() {
                   dataKey={selectedMetric} 
                   fill={2 % 2 === 0 ? 'var(--color-primary)' : 'var(--color-secondary)'} 
                   radius={[4, 4, 0, 0]} />
-                {/* <Cell
-                  key={`cell-${index}`}
-                  fill={index % 2 === 0 ? 'var(--color-primary)' : 'var(--color-secondary)'}
-                />
-                ))} */}
+               
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -327,8 +390,8 @@ export function Dashboard() {
                   value={sizeRange}
                   onValueChange={setSizeRange}
                   min={0}
-                  max={3000}
-                  step={100}
+                  max={100}
+                  step={10}
                   className="mt-2"
                 />
               </div>
@@ -346,7 +409,7 @@ export function Dashboard() {
                   onClick={() => {
                     setSelectedOrganism('all');
                     setSelectedType('all');
-                    setSizeRange([0, 3000]);
+                    setSizeRange([0, 100]);
                   }}
                 >
                   Reset Filters
@@ -445,97 +508,7 @@ export function Dashboard() {
           </table>
         </div>
       </div>
-          {/* Performance Chart */}
-           {/* Algorithm Comparison Table */}
-        {/* <div id="comparison" className="lg:col-span-2 mt-6 rounded-lg border bg-card p-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold">Algorithm Comparison</h2>
-            <p className="text-sm text-muted-foreground">
-              Detailed performance metrics across all benchmarked algorithms
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Algorithm
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    AUROC
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    AUPRC
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    F1 Score
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Runtime (s)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {algorithmComparison.map((algo, index) => (
-                  <tr key={algo.algorithm} className="border-b last:border-0">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            index === 0 ? 'bg-primary' : 'bg-secondary'
-                          }`}
-                        />
-                        <span className="font-medium">{algo.algorithm}</span>
-                      </div>
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {algo.auroc.toFixed(3)}
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {algo.auprc.toFixed(3)}
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {algo.f1.toFixed(3)}
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm text-muted-foreground">
-                      {algo.runtime}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div> */}
-
-          {/* Recent Results */}
-      {/* <div id="recent" className="rounded-lg border bg-card p-6 mt-5">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">Recent Results</h2>
-          <p className="text-sm text-muted-foreground">Latest benchmark runs</p>
-        </div>
-        <div className="space-y-4">
-          {recentResults.map((result) => (
-            <div key={result.id} className="p-3 rounded-lg border bg-accent/50">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-sm font-medium">{result.dataset}</div>
-                <div className="text-xs text-muted-foreground">{result.date}</div>
-              </div>
-              <div className="text-xs text-muted-foreground mb-2">{result.algorithm}</div>
-              <div className="flex gap-4 text-xs">
-                <div>
-                  <span className="text-muted-foreground">AUROC:</span>{' '}
-                  <span className="font-medium">{result.auroc}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">AUPRC:</span>{' '}
-                  <span className="font-medium">{result.auprc}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div> */}
-
+          
       {/* Recent Results */}
       <div id="recent" className="rounded-lg border bg-card p-6 mt-5">
         <div className="mb-6">
@@ -547,7 +520,7 @@ export function Dashboard() {
             <div key={result.id} className="p-3 rounded-lg border bg-accent/50">
               <div className="flex items-center justify-between mb-1">
                 <div className="text-sm font-medium">{result.dataset}</div>
-                <div className="text-xs text-muted-foreground">{result.date}</div>
+                <div className="text-xs text-muted-foreground">{formatMinutesAgo(result.createdAt)}</div>
               </div>
               <div className="text-xs text-muted-foreground mb-2">{result.algorithm}</div>
               <div className="flex gap-4 text-xs">
@@ -564,155 +537,9 @@ export function Dashboard() {
           ))}
         </div>
       </div>
-
-          {/* Recent Results
-          <div id="recent" className="rounded-lg border bg-card p-6 mt-5">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold">Recent Results</h2>
-              <p className="text-sm text-muted-foreground">Latest benchmark runs</p>
-            </div>
-            <div className="space-y-4">
-              {recentResults.map((result) => (
-                <div key={result.id} className="p-3 rounded-lg border bg-accent/50">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">{result.dataset}</div>
-                    <div className="text-xs text-muted-foreground">{result.date}</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    {result.algorithm}
-                  </div>
-                  <div className="flex gap-4 text-xs">
-                    <div>
-                      <span className="text-muted-foreground">AUROC:</span>{' '}
-                      <span className="font-medium">{result.auroc}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">AUPRC:</span>{' '}
-                      <span className="font-medium">{result.auprc}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div> */}
         </div>
-
-        {/* Algorithm Comparison Table */}
-        {/* <div id="comparison" className="mt-6 rounded-lg border bg-card p-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold">Algorithm Comparison</h2>
-            <p className="text-sm text-muted-foreground">
-              Detailed performance metrics across all benchmarked algorithms
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Algorithm
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    AUROC
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    AUPRC
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    F1 Score
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Runtime (s)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {algorithmComparison.map((algo, index) => (
-                  <tr key={algo.algorithm} className="border-b last:border-0">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            index === 0 ? 'bg-primary' : 'bg-secondary'
-                          }`}
-                        />
-                        <span className="font-medium">{algo.algorithm}</span>
-                      </div>
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {algo.auroc.toFixed(3)}
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {algo.auprc.toFixed(3)}
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm">
-                      {algo.f1.toFixed(3)}
-                    </td>
-                    <td className="text-right py-3 px-4 font-mono text-sm text-muted-foreground">
-                      {algo.runtime}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div> */}
       </div>
-      {/* -------------------- LANDINGPAGE FOOTER -------------------- */}
-      {/* <footer className="bg-gray-900 text-gray-300 py-12 mt-10">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="text-white">WebGenie</div>
-                  <div className="text-xs text-gray-400">Benchmarking Platform</div>
-                </div>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Research-grade GRN inference benchmarking and visualization for evaluating
-              gene regulatory network inference algorithms on single-cell data.
-              </p>
-            </div>
-            
-            <div>
-              <h5 className="text-white mb-4">Platform</h5>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a></li>
-                <li><a href="/datasets" className="hover:text-white transition-colors">Datasets</a></li>
-                <li><a href="/compare" className="hover:text-white transition-colors">Algorithms</a></li>
-                <li><a href="/upload" className="hover:text-white transition-colors">Upload</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h5 className="text-white mb-4">Resources</h5>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="https://github.com/Murali-group/Beeline" className="hover:text-white transition-colors">GitHub</a></li>
-                <li><a href="https://github.com/ukanduchimeremezejames/WebgenieDark" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h5 className="text-white mb-4">Subscribe</h5>
-              <p className="text-sm text-gray-400 mb-2">Get updates about new datasets and algorithms</p>
-              <form className="flex gap-2">
-                <input type="email" placeholder="Email" className="flex-1 p-2 rounded-lg border border-gray-700 bg-gray-800 text-white text-sm" />
-                <button type="submit" className="px-4 py-2 bg-purple-600 rounded-lg text-white text-sm hover:bg-purple-700 transition-colors">Subscribe</button>
-              </form>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-700 pt-6 text-center text-sm">
-            © 2026 WebGenie | Built on the BEELINE Platform. All rights reserved.
-          </div>
-        </div>
-      </footer> */}
-
+      
             {/* Footer */}
       <footer className="border-t bg-background mt-12">
         <div className="container mx-auto px-6 py-6">

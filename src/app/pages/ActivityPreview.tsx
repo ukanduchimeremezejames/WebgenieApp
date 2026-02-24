@@ -1,7 +1,7 @@
 interface ActivityPreviewProps {
   data: number[];
-  width?: number;   // optional, defaults to 100%
-  height?: number;  // optional, defaults to 32
+  width?: number;  
+  height?: number;  
   strokeColor?: string;
 }
 
@@ -16,7 +16,7 @@ export function ActivityPreview({
   const maxVal = Math.max(...data);
   const minVal = Math.min(...data);
 
-  // Convert data to SVG points
+ 
   const points = data.map((val, i) => {
     const x = (i / (data.length - 1)) * width;
     const y = height - ((val - minVal) / (maxVal - minVal)) * height;

@@ -130,66 +130,6 @@ function randomEdgeType() {
   return edges;
 }
 
-// Generate realistic dataset
-// function generateDataset(id: string, name: string, organism: string, type: string, genes: number) {
-//   const algorithms = ['algo1', 'algo2', 'algo3'];
-//   const nodes: Node[] = Array.from({ length: genes }, (_, i) => ({
-//     id: `gene${i + 1}`,
-//     label: `Gene ${i + 1}`,
-//   }));
-
-//   const edgesData = generateEdges1(nodes, algorithms);
-
-//   // Compute degree and neighbors for each node
-//   nodes.forEach(node => {
-//     const neighbors = edgesData
-//       .filter(e => e.source === node.id || e.target === node.id)
-//       .map(e => (e.source === node.id ? e.target : e.source));
-//     node.degree = neighbors.length;
-
-//     // Compute best algorithm & mean score for this node
-//     const algoScores: Record<string, number[]> = {};
-//     edgesData
-//       .filter(e => e.source === node.id || e.target === node.id)
-//       .forEach(edge => {
-//         Object.entries(edge.scores).forEach(([algo, score]) => {
-//           if (!algoScores[algo]) algoScores[algo] = [];
-//           algoScores[algo].push(score);
-//         });
-//       });
-
-//     let bestAlgo = '';
-//     let bestMean = 0;
-//     Object.entries(algoScores).forEach(([algo, scores]) => {
-//       const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-//       if (mean > bestMean) {
-//         bestMean = mean;
-//         bestAlgo = algo;
-//       }
-//     });
-
-//     node.neighbors = neighbors;
-//     node.bestAlgo = bestAlgo;
-//     node.bestMean = bestMean;
-//   });
-
-//   return {
-//     id,
-//     name,
-//     organism,
-//     type,
-//     genes,
-//     cells: randomInt1(300, 800),
-//     edges: edgesData.length,
-//     source: 'curated' as const,
-//     description: `${name} mock dataset`,
-//     lastUpdated: new Date().toISOString().split('T')[0],
-//     sparklineData: Array.from({ length: 10 }, () => randomInt1(20, 100)),
-//     nodes,
-//     edgesData,
-//   } as Dataset;
-// }
-
 const geneNames = [
   'SOX2', 'OCT4', 'NANOG', 'SOX3', 'GATA3', 'KLF4', 'MYC', 'POU5F1',
   'TBX3', 'DPPA4', 'LIN28A', 'ZFP42', 'TFAP2C', 'NR5A2', 'ESRRB', 'TAL1',
@@ -317,7 +257,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg4',
-    name: 'ARACNE',
+    name: 'Spearman',
     version: '1.0',
     description: 'Variational Information Theory for network inference',
     category: 'Information Theory',
@@ -326,7 +266,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg5',
-    name: 'SINGE',
+    name: 'ARACNE',
     version: '1.0',
     description: 'Tree-based network inference',
     category: 'Tree-based',
@@ -335,7 +275,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg6',
-    name: 'GRNVBEM',
+    name: 'SINGE',
     version: '1.2',
     description: 'Probabilistic based expression association for pseudotime',
     category: 'Probabilistic',
@@ -344,7 +284,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg7',
-    name: 'GRISLI',
+    name: 'GRNVBEM',
     version: '2.1',
     description: 'Dynamical Systems Information Decomposition and Context',
     category: 'Dynamical Systems',
@@ -353,7 +293,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg8',
-    name: 'SCODE',
+    name: 'GRISLI',
     version: '1.0',
     description: 'Pseudo-time network inference',
     category: 'Time Series',
@@ -362,7 +302,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg9',
-    name: 'SCNS',
+    name: 'SCODE',
     version: '1.0',
     description: 'Partial correlation based network inference',
     category: 'Linear Models',
@@ -371,7 +311,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg10',
-    name: 'LEAP',
+    name: 'SNS',
     version: '1.0',
     description: 'Regression network inference with time series',
     category: 'Regression',
@@ -380,7 +320,7 @@ export const mockAlgorithms: Algorithm[] = [
   },
   {
     id: 'alg11',
-    name: 'Spearman',
+    name: 'LEAP',
     version: '1.0',
     description: 'Correlation based network inference',
     category: 'Correlation',
@@ -398,7 +338,6 @@ export const mockAlgorithms: Algorithm[] = [
   }
 ];
 
-// Example: generate all mock datasets
 export const mockDatasets: Dataset[] = [
   generateDataset('hESC', 'hESC', 'Human', 'scRNA-seq', 25),
   generateDataset('mDC', 'mDC', 'Mouse', 'scRNA-seq', 22),
@@ -413,10 +352,6 @@ export const mockDatasets: Dataset[] = [
   generateDataset('yeast-1', 'Yeast Network 1', 'Yeast', 'Bulk RNA-seq', 22),
   generateDataset('yeast-2', 'Yeast Network 2', 'Yeast', 'Bulk RNA-seq', 21),
 ];
-
-
-// mockData.ts
-// export const mockAlgorithms = ['GENIE3', 'CLR', 'ARACNE', 'MRNET'];
 
 const geneLabels = [
   'SOX2','OCT4','NANOG','KLF4','MYC','SOX3','POU5F1','GATA3',
@@ -476,7 +411,6 @@ mockNetworkData.nodes.forEach(sourceNode => {
 // For debugging: print number of nodes and edges
 console.log(`Generated ${mockNetworkData.nodes.length} nodes and ${mockInferenceData.edges.length} edges`);
 
-
 // mockData.ts
 export type EdgeType = 'activation' | 'repression';
 
@@ -502,14 +436,6 @@ export interface Dataset {
   edges: Edge[];
   algorithms: string[];
 }
-
-// Realistic gene names for demo
-// const geneNames = [
-//   'SOX2', 'OCT4', 'NANOG', 'SOX3', 'GATA3', 'KLF4', 'MYC', 'POU5F1',
-//   'TBX3', 'DPPA4', 'LIN28A', 'ZFP42', 'TFAP2C', 'NR5A2', 'ESRRB', 'TAL1',
-//   'RUNX1', 'HNF4A', 'FOXA2', 'PAX6', 'SOX1', 'SOX17', 'CDX2', 'EOMES', 'GATA6',
-//   'MEIS1', 'HAND1', 'HOXA1', 'HOXB1', 'HOXC6'
-// ];
 
 // Algorithms
 const algorithms = ['GENIE3', 'SCENIC', 'PIDC', 'GRNBoost2'];
@@ -572,52 +498,6 @@ function getGenePool(datasetId: string): string[] {
   if (datasetId === 'mESC') return datasetGenePools.mESC;
   return datasetGenePools.hESC; // default human stem-like
 }
-
-
-
-// Generate realistic nodes and compute degree, neighbors, best algorithm
-// function generateNodes(numNodes: number, edges: Edge[]): Node[] {
-//   const nodes: Node[] = geneNames.slice(0, numNodes).map((name, i) => ({
-//     id: `gene-${i + 1}`,
-//     label: name
-//   }));
-
-//   // compute neighbors and degree
-//   nodes.forEach(node => {
-//     const neighbors = edges
-//       .filter(e => e.source === node.id || e.target === node.id)
-//       .map(e => (e.source === node.id ? e.target : e.source));
-
-//     node.neighbors = neighbors;
-//     node.degree = neighbors.length;
-
-//     // compute best algorithm
-//     const algoScores: Record<string, number[]> = {};
-//     edges
-//       .filter(e => e.source === node.id || e.target === node.id)
-//       .forEach(edge => {
-//         Object.entries(edge.scores).forEach(([algo, score]) => {
-//           if (!algoScores[algo]) algoScores[algo] = [];
-//           algoScores[algo].push(score);
-//         });
-//       });
-
-//     let bestAlgo = '';
-//     let bestMean = 0;
-//     Object.entries(algoScores).forEach(([algo, scores]) => {
-//       const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-//       if (mean > bestMean) {
-//         bestMean = mean;
-//         bestAlgo = algo;
-//       }
-//     });
-
-//     node.bestAlgo = bestAlgo;
-//     node.bestMean = bestMean;
-//   });
-
-//   return nodes;
-// }
 
 function generateNodes(
   dataset: Dataset,
@@ -689,7 +569,6 @@ function generateNodes(
 
   return nodes;
 }
-
 
 export const mockPerformanceMetrics: PerformanceMetrics[] = [
   {
@@ -913,8 +792,143 @@ export function getROCCurveData(algorithmId: string) {
   return points;
 }
 
-
 export const mockDatasets2: Dataset[] = [
+  {
+    id: 'dyn-BF',
+    name: 'Dynamic BF',
+    organism: 'N/A',
+    type: 'synthetic',
+    genes: 5,
+    cells: 105,
+    edges: 12,
+    source: 'synthetic' as const,
+    description: 'Synthetic bifurcating gene regulatory network dataset simulating a branching cellular trajectory.',
+    lastUpdated: '2024-11-15',
+    sparklineData: [34, 45, 52, 48, 61, 73, 68, 82, 91, 78]
+  },
+  {
+    id: 'dyn-BFC',
+    name: 'Dynamic BFC',
+    organism: 'N/A',
+    type: 'synthetic',
+    genes: 9,
+    cells: 125,
+    edges: 18,
+    source: 'synthetic' as const,
+    description: 'Synthetic bifurcating-converging gene regulatory network dataset representing complex branching and merging dynamics.',
+    lastUpdated: '2024-10-28',
+    sparklineData: [28, 31, 39, 42, 38, 51, 58, 64, 59, 71]
+  },
+  {
+    id: 'dyn-CY',
+    name: 'Dynamic CY',
+    organism: 'N/A',
+    type: 'synthetic',
+    genes: 5,
+    cells: 110,
+    edges: 6,
+    source: 'synthetic' as const,
+    lastUpdated: '2022-11-03',
+    description: 'Synthetic cyclic gene regulatory network dataset with periodic trajectory structure.',
+    sparklineData: [22, 35, 41, 48, 44, 59, 62, 71, 68, 75]
+  },
+  {
+    id: 'dyn-LI',
+    name: 'Dynamic LI',
+    organism: 'N/A',
+    type: 'synthetic',
+    genes: 7,
+    cells: 115,
+    edges: 8,
+    source: 'synthetic' as const,
+    lastUpdated: '2024-09-22',
+    description: 'Synthetic linear gene regulatory network dataset representing a sequential regulatory cascade.',
+    sparklineData: [31, 38, 42, 49, 55, 62, 58, 69, 77, 82]
+  },
+  {
+    id: 'GSD',
+    name: 'GSD',
+    organism: 'N/A',
+    type: 'curated',
+    genes: 18,
+    cells: 120,
+    edges: 79,
+    source: 'real' as const,
+    lastUpdated: '2024-10-12',
+    description: 'Curated Boolean model dataset representing the gene regulatory network underlying gonadal sex determination.',
+    sparklineData: [19, 28, 34, 41, 48, 52, 59, 65, 71, 68]
+  },
+  {
+    id: 'HSC',
+    name: 'HSC',
+    organism: 'N/A',
+    type: 'curated',
+    genes: 11,
+    cells: 110,
+    edges: 30,
+    source: 'real' as const,
+    lastUpdated: '2024-09-05',
+    description: 'Curated Boolean model dataset capturing the gene regulatory network of hematopoietic stem cell differentiation.”',
+    sparklineData: [42, 51, 58, 62, 69, 75, 81, 88, 92, 89]
+  }
+];
+
+export const allDatasets = [
+  // -------------------------
+  // Curated Ground-Truth GRNs
+  // -------------------------
+  {
+    id: 'GSD',
+    name: 'GSD',
+    organism: 'N/A',
+    type: 'curated',
+    genes: 18,
+    cells: 120,
+    edges: 79,
+    source: 'real' as const,
+    lastUpdated: '2020-03-27',
+    sparklineData: [62, 59, 62, 61, 63, 64, 63, 60, 60, 64]
+  },
+  {
+    id: 'HSC',
+    name: 'HSC',
+    organism: 'N/A',
+    type: 'curated',
+    genes: 11,
+    cells: 110,
+    edges: 30,
+    source: 'real' as const,
+    lastUpdated: '2020-05-14',
+    sparklineData: [59, 58, 61, 60, 64, 57, 62, 59, 60, 58]
+  },
+  {
+    id: 'mCAD',
+    name: 'mCAD',
+    organism: 'N/A',
+    type: 'curated',
+    genes: 5,
+    cells: 100,
+    edges: 14,
+    source: 'real' as const,
+    lastUpdated: '2021-01-11',
+    sparklineData: [60, 63, 58, 61, 65, 53, 62, 57, 60, 61]
+  },
+  {
+    id: 'VSC',
+    name: 'VSC',
+    organism: 'N/A',
+    type: 'curated',
+    genes: 8,
+    cells: 115,
+    edges: 15,
+    source: 'real' as const,
+    lastUpdated: '2021-04-02',
+    sparklineData: [60, 61, 64, 59, 62, 58, 63, 60, 62, 61]
+  },
+
+  // -------------------------
+  // Real scRNA-seq Datasets
+  // -------------------------
   {
     id: 'hESC',
     name: 'hESC',
@@ -923,10 +937,21 @@ export const mockDatasets2: Dataset[] = [
     genes: 1000,
     cells: 758,
     edges: 3200,
-    source: 'curated' as const,
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    lastUpdated: '2024-11-15',
-    sparklineData: [34, 45, 52, 48, 61, 73, 68, 82, 91, 78]
+    source: 'real' as const,
+    lastUpdated: '2020-09-18',
+    sparklineData: [29, 27, 31, 25, 29, 31, 28, 32, 30, 26]
+  },
+  {
+    id: 'hHep',
+    name: 'hHep',
+    organism: 'Human',
+    type: 'scRNA-seq',
+    genes: 950,
+    cells: 642,
+    edges: 2800,
+    source: 'real' as const,
+    lastUpdated: '2021-02-23',
+    sparklineData: [18, 24, 20, 25, 32, 28, 25, 23, 25, 26]
   },
   {
     id: 'mDC',
@@ -937,9 +962,8 @@ export const mockDatasets2: Dataset[] = [
     cells: 383,
     edges: 2100,
     source: 'real' as const,
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    lastUpdated: '2024-10-28',
-    sparklineData: [28, 31, 39, 42, 38, 51, 58, 64, 59, 71]
+    lastUpdated: '2021-06-30',
+    sparklineData: [15, 20, 18, 26, 20, 25, 19, 23, 21, 17]
   },
   {
     id: 'mESC',
@@ -949,49 +973,9 @@ export const mockDatasets2: Dataset[] = [
     genes: 1100,
     cells: 536,
     edges: 3400,
-    source: 'curated' as const,
-    lastUpdated: '2024-11-08',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [22, 35, 41, 48, 44, 59, 62, 71, 68, 75]
-  },
-  {
-    id: 'hHep',
-    name: 'hHep',
-    organism: 'Human',
-    type: 'scRNA-seq',
-    genes: 950,
-    cells: 642,
-    edges: 2800,
-    source: 'synthetic' as const,
-    lastUpdated: '2024-09-22',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [31, 38, 42, 49, 55, 62, 58, 69, 77, 82]
-  },
-  {
-    id: 'VSC',
-    name: 'VSC',
-    organism: 'Mouse',
-    type: 'scRNA-seq',
-    genes: 8,
-    cells: 115,
-    edges: 15,
-    source: 'curated' as const,
-    lastUpdated: '2024-10-12',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [19, 28, 34, 41, 48, 52, 59, 65, 71, 68]
-  },
-  {
-    id: 'hHSPC',
-    name: 'hHSPC',
-    organism: 'Human',
-    type: 'scRNA-seq',
-    genes: 2145,
-    cells: 823,
-    edges: 4156,
     source: 'real' as const,
-    lastUpdated: '2024-09-05',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [42, 51, 58, 62, 69, 75, 81, 88, 92, 89]
+    lastUpdated: '2022-01-19',
+    sparklineData: [26, 25, 28, 24, 23, 27, 23, 23, 24, 22]
   },
   {
     id: 'mHSC-E',
@@ -1001,10 +985,21 @@ export const mockDatasets2: Dataset[] = [
     genes: 1050,
     cells: 645,
     edges: 3100,
-    source: 'curated' as const,
-    lastUpdated: '2024-11-01',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [25, 33, 39, 46, 53, 61, 68, 74, 79, 85]
+    source: 'real' as const,
+    lastUpdated: '2022-03-07',
+    sparklineData: [26, 27, 25, 30, 28, 30, 26, 29, 31, 29]
+  },
+  {
+    id: 'mHSC-GM',
+    name: 'mHSC-GM',
+    organism: 'Mouse',
+    type: 'scRNA-seq',
+    genes: 1200,
+    cells: 635,
+    edges: 3600,
+    source: 'real' as const,
+    lastUpdated: '2022-06-12',
+    sparklineData: [30, 25, 26, 23, 27, 29, 26, 28, 30, 24]
   },
   {
     id: 'mHSC-L',
@@ -1014,62 +1009,25 @@ export const mockDatasets2: Dataset[] = [
     genes: 980,
     cells: 712,
     edges: 2950,
-    source: 'curated' as const,
-    lastUpdated: '2024-10-29',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [28, 36, 43, 49, 56, 64, 71, 77, 82, 88]
-  },
-  {
-    id: 'Synthetic-1',
-    name: 'Synthetic-1',
-    organism: 'Synthetic',
-    type: 'scRNA-seq',
-    genes: 1500,
-    cells: 500,
-    edges: 2500,
-    source: 'synthetic' as const,
-    lastUpdated: '2024-08-15',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [30, 35, 40, 45, 50, 55, 60, 65, 70, 75]
-  },
-  {
-    id: 'Synthetic-2',
-    name: 'Synthetic-2',
-    organism: 'Synthetic',
-    type: 'scRNA-seq',
-    genes: 2000,
-    cells: 750,
-    edges: 3500,
-    source: 'synthetic' as const,
-    lastUpdated: '2024-08-20',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
-  },
-  {
-    id: 'yeast-1',
-    name: 'Yeast Network 1',
-    organism: 'Yeast',
-    type: 'Bulk RNA-seq',
-    genes: 987,
-    cells: 234,
-    edges: 1456,
     source: 'real' as const,
-    lastUpdated: '2024-07-10',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [18, 24, 31, 37, 44, 51, 57, 63, 68, 72]
+    lastUpdated: '2022-08-25',
+    sparklineData: [20, 22, 25, 26, 27, 23, 26, 24, 28, 24]
   },
+
+  // -------------------------
+  // Synthetic Dynamic Networks
+  // -------------------------
   {
-    id: 'yeast-2',
-    name: 'Yeast Network 2',
-    organism: 'Yeast',
-    type: 'Bulk RNA-seq',
-    genes: 1123,
-    cells: 298,
-    edges: 1789,
-    source: 'real' as const,
-    lastUpdated: '2024-07-22',
-    description: 'Human embryonic stem cells single-cell RNA-seq dataset',
-    sparklineData: [21, 27, 34, 40, 47, 54, 60, 66, 71, 75]
+    id: 'dyn-LL',
+    name: 'Dynamic LL',
+    organism: 'N/A',
+    type: 'synthetic',
+    genes: 18,
+    cells: 140,
+    edges: 19,
+    source: 'synthetic' as const,
+    lastUpdated: '2020-07-09',
+    sparklineData: [39, 42, 42, 41, 38, 39, 41, 37, 40, 40]
   },
   {
     id: 'dyn-LI',
@@ -1081,7 +1039,6 @@ export const mockDatasets2: Dataset[] = [
     edges: 8,
     source: 'synthetic' as const,
     lastUpdated: '2020-10-21',
-    description: 'Dynamic LI single-cell RNA-seq dataset',
     sparklineData: [36, 37, 35, 40, 38, 41, 39, 39, 41, 34]
   },
   {
@@ -1094,7 +1051,6 @@ export const mockDatasets2: Dataset[] = [
     edges: 20,
     source: 'synthetic' as const,
     lastUpdated: '2021-03-16',
-    description: 'Dynamic TF single-cell RNA-seq dataset',
     sparklineData: [40, 41, 38, 41, 36, 43, 39, 42, 37, 42]
   },
   {
@@ -1107,7 +1063,6 @@ export const mockDatasets2: Dataset[] = [
     edges: 12,
     source: 'synthetic' as const,
     lastUpdated: '2021-09-28',
-    description: 'Dynamic BF single-cell RNA-seq dataset',
     sparklineData: [35, 39, 37, 37, 36, 40, 39, 42, 38, 39]
   },
   {
@@ -1120,7 +1075,6 @@ export const mockDatasets2: Dataset[] = [
     edges: 18,
     source: 'synthetic' as const,
     lastUpdated: '2022-02-14',
-    description: 'Dynamic BFC single-cell RNA-seq dataset',
     sparklineData: [39, 40, 38, 41, 37, 42, 39, 39, 38, 40]
   },
   {
@@ -1133,8 +1087,6 @@ export const mockDatasets2: Dataset[] = [
     edges: 6,
     source: 'synthetic' as const,
     lastUpdated: '2022-11-03',
-    description: 'Dynamic CY cells single-cell RNA-seq dataset',
     sparklineData: [37, 41, 39, 40, 31, 43, 40, 41, 40, 41]
-  }
+  },
 ];
-

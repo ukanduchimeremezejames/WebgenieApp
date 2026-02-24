@@ -34,62 +34,6 @@ const [selectedDatasetId, setSelectedDatasetId] = useState("hESC");
 const selectedDataset = mockDatasets.find(
   d => d.id === selectedDatasetId
 )!;
-// const inferenceData = useMemo(() => generateMockInferenceData(), []);
-
-// const predictedBestAlgorithm = useMemo(() => {
-//   const algoScores: Record<string, number[]> = {};
-
-//   inferenceData.edges.forEach(edge => {
-//     Object.entries(edge.scores as Record<string, number>)
-//   .forEach(([algo, score]) => {
-//       if (!algoScores[algo]) algoScores[algo] = [];
-//       algoScores[algo].push(score);
-//     });
-//   });
-
-//   let bestAlgo = "";
-//   let bestMean = 0;
-
-//   Object.entries(algoScores).forEach(([algo, scores]) => {
-//     const mean =
-//       scores.reduce((a, b) => a + b, 0) / scores.length;
-
-//     if (mean > bestMean) {
-//       bestMean = mean;
-//       bestAlgo = algo;
-//     }
-//   });
-
-//   return bestAlgo;
-// }, [inferenceData]);
-
-// const predictedBestAlgorithm = useMemo(() => {
-//   const algoScores: Record<string, number[]> = {};
-
-//   inferenceData.edges.forEach(edge => {
-//     Object.entries(edge.scores).forEach(
-//       ([algo, score]: [string, number]) => {
-//         if (!algoScores[algo]) algoScores[algo] = [];
-//         algoScores[algo].push(score);
-//       }
-//     );
-//   });
-
-//   let bestAlgo = "";
-//   let bestMean = 0;
-
-//   Object.entries(algoScores).forEach(([algo, scores]) => {
-//     const mean =
-//       scores.reduce((a, b) => a + b, 0) / scores.length;
-
-//     if (mean > bestMean) {
-//       bestMean = mean;
-//       bestAlgo = algo;
-//     }
-//   });
-
-//   return bestAlgo;
-// }, [inferenceData]);
 
 const inferenceData = useMemo(() => {
   return generateMockInferenceData(selectedDataset);
@@ -168,37 +112,6 @@ const [minConsensus, setMinConsensus] = useState([1]); // default 2-3
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
-  // const filteredEdges = mockNetworkData.edges.filter(edge => {
-  //   const matchesType = edgeFilter === 'all' || edge.type === edgeFilter;
-  //   const matchesScore = edge.weight >= scoreThreshold[0];
-  //   return matchesType && matchesScore;
-  // }).slice(0, topK[0]);
-
-  
-  // const filteredEdges = mockInferenceData.edges.filter(edge => {
-
-  //   const supportingAlgos = Object.keys(edge.scores);
-
-  //   // Reverse filtering:
-  //   // Show edges supported by ALL selected algorithms
-  //   const matchesAlgorithmSelection =
-  //     selectedAlgorithms.length === 0 ||
-  //     selectedAlgorithms.every(algo => supportingAlgos.includes(algo));
-
-  //   const matchesConsensus =
-  //     supportingAlgos.length >= minConsensus[0];
-
-  //   const matchesScore =
-  //     Math.max(...Object.values(edge.scores)) >= scoreThreshold[0];
-    
-  //   const matchesType =
-  //   edgeFilter === 'all' || edge.type === edgeFilter;
-
-
-  //   return matchesAlgorithmSelection && matchesConsensus && matchesScore &&
-  //   matchesType;
-
-  // });
 
   const filteredEdges = useMemo(() => {
     return mockInferenceData.edges.filter(edge => {
@@ -263,26 +176,12 @@ const globalDegreeMap = useMemo(() => {
   }, {});
 }, [filteredEdges]);
 
-
-//   const degreeMap = useMemo(() => {
-//   return limitedEdges.reduce<Record<string, number>>((acc, edge) => {
-//     acc[edge.source] = (acc[edge.source] || 0) + 1;
-//     acc[edge.target] = (acc[edge.target] || 0) + 1;
-//     return acc;
-//   }, {});
-// }, [limitedEdges]);
-
-
   const nodeIds = new Set<string>();
   filteredEdges.forEach(edge => {
     nodeIds.add(edge.source);
     nodeIds.add(edge.target);
   });
 
-  // const filteredNodes = mockNetworkData.nodes.filter(node =>
-  //   nodeIds.has(node.id) &&
-  //   (searchTerm === '' || node.label.toLowerCase().includes(searchTerm.toLowerCase()))
-  // );
 
   const filteredNodes = Array.from(nodeIds).map(id => {
   const existing = mockNetworkData.nodes.find(n => n.id === id);
@@ -298,16 +197,6 @@ const globalDegreeMap = useMemo(() => {
 );
 
 
-// const degreeMap: Record<string, number> = {};
-
-// filteredEdges.forEach(edge => {
-//   degreeMap[edge.source] = (degreeMap[edge.source] || 0) + 1;
-//   degreeMap[edge.target] = (degreeMap[edge.target] || 0) + 1;
-// });
-
-
-
-
   const cytoscapeElements = [
     ...filteredNodes.map(node => ({
       data: {
@@ -317,15 +206,7 @@ const globalDegreeMap = useMemo(() => {
         degree: degreeMap[node.id] || 1
       }
     })),
-    // ...filteredEdges.map((edge, idx) => ({
-    //   data: {
-    //     id: `edge-${idx}`,
-    //     source: edge.source,
-    //     target: edge.target,
-    //     weight: edge.weight,
-    //     type: edge.type
-    //   }
-    // }))
+
 
     ...filteredEdges.map(edge => ({
       data: {
@@ -358,16 +239,7 @@ const globalDegreeMap = useMemo(() => {
         'color': '#ffffff'
       }
     },
-    // {
-    //   selector: 'edge',
-    //   style: {
-    //     'width': 2,
-    //     'line-color': '#E4E6EB',
-    //     'target-arrow-color': '#E4E6EB',
-    //     'target-arrow-shape': 'triangle',
-    //     'curve-style': 'bezier'
-    //   }
-    // },
+
     {
   selector: 'edge',
   style: {
@@ -429,18 +301,7 @@ const handleExportPNG = () => {
   }
 };
 
-// const handleExportJSON = () => {
-//     if (!cy.current) return;
-//     const json = cy.current.json();
-//     const blob = new Blob([JSON.stringify(json, null, 2)], {
-//       type: "application/json",
-//     });
-//     saveAs(blob, "network.json");
-//   };
 
-// -------------------- New Export Handlers --------------------
-
-// Export SVG
 const handleExportSVG = () => {
   if (cyRef.current) {
     const svg = cyRef.current.svg({ full: true }); // Cytoscape.js SVG export
@@ -498,7 +359,7 @@ const handleExportCSV = () => {
 // Export GraphML
 const handleExportGraphML = () => {
   if (cyRef.current) {
-    const graphml = cyRef.current.graphml(); // Requires cytoscape-graphml extension
+    const graphml = cyRef.current.graphml();
     const blob = new Blob([graphml], { type: 'application/xml;charset=utf-8' });
     const link = document.createElement('a');
     link.download = 'network.graphml';
@@ -632,43 +493,9 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
 </div>
 
 
-{/* Header */}
-        {/* <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Network Explorer</h1>
-          <p className="text-muted-foreground">
-            Interactive exploration of gene regulatory network predictions
-          </p>
-        </div> */}
-
-        {/* Info Banner */}
-        {/* <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
-          <div className="flex items-start gap-3">
-            <Network className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-sm mb-1">How to Explore This Network</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• <strong>Click nodes</strong> to see gene annotations and regulatory relationships</li>
-                <li>• <strong>Use the search bar</strong> to find specific genes like SOX2, OCT4, or NANOG</li>
-                <li>• <strong>Adjust score threshold</strong> to focus on high-confidence edges</li>
-                <li>• <strong>Toggle 'TF-only View'</strong> to see the transcription factor network</li>
-              </ul>
-            </div>
-          </div>
-        </div> */}
 
         <div id="search" className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-          {/* <Card>
-            <CardHeader>Algorithm Recommendation</CardHeader>
-            <CardContent>
-              <p className="text-lg font-semibold">
-                Recommended: {predictedBestAlgorithm}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Based on mean edge confidence across inferred network.
-              </p>
-            </CardContent>
-          </Card> */}
 
           {/* Left Sidebar - Controls */}
           <Card className="p-6 lg:col-span-1">
@@ -851,10 +678,7 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
                 layout={{ name: layout }}
                 cy={(cy) => {
                   cyRef.current = cy;
-                  // cy.on('tap', 'node', (evt) => {
-                  //   const node = evt.target;
-                  //   setSelectedNode(node.data());
-                  // });
+                
 
                   cy.on("tap", "node", evt => {
   const node = evt.target;
@@ -881,28 +705,6 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
               
             </div>
           </Card>
-
-          {/* {selectedNodeInfo && (
-  <Card className="p-4 mt-4">
-    <h3 className="font-semibold text-lg">
-      Gene: {selectedNodeInfo.id}
-    </h3>
-
-    <p>Degree: {selectedNodeInfo.degree}</p>
-
-    <p>
-      Best Algorithm: {selectedNodeInfo.bestAlgo}
-    </p>
-
-    <p>
-      Mean Score: {selectedNodeInfo.bestMean.toFixed(3)}
-    </p>
-
-    <p className="mt-2 text-sm">
-      Neighbors: {selectedNodeInfo.neighbors.join(", ")}
-    </p>
-  </Card>
-)} */}
 
 {selectedNodeInfo && (
   <Card className="p-6">
@@ -1140,10 +942,6 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
                     <Download className="w-4 h-4" />
                     Export as PNG
                   </button>
-                  {/* <button onClick={handleExportSVG} className="w-full flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-accent transition-colors">
-                    <Download className="w-4 h-4" />
-                    Export as SVG
-                  </button> */}
                   <button onClick={handleExportCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-accent transition-colors">
                     <Download className="w-4 h-4" />
                     Download Edge List (CSV)
@@ -1152,70 +950,13 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
                     <Download className="w-4 h-4" />
                     Download as JSON
                   </button>
-                  {/* <button onClick={handleExportJSON} className="px-3 py-2 bg-primary text-white rounded">
-                    JSON
-                  </button> */}
+               
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* -------------------- LANDINGPAGE FOOTER -------------------- */}
-            {/* <footer className="bg-gray-900 text-gray-300 py-12 mt-10">
-              <div className="max-w-[1400px] mx-auto px-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
-                        <Activity className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-white">WebGenie</div>
-                        <div className="text-xs text-gray-400">Benchmarking Platform</div>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-400 leading-relaxed">
-                      Research-grade GRN inference benchmarking and visualization for evaluating
-                    gene regulatory network inference algorithms on single-cell data.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h5 className="text-white mb-4">Platform</h5>
-                    <ul className="space-y-2 text-sm">
-                      <li><a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a></li>
-                      <li><a href="/datasets" className="hover:text-white transition-colors">Datasets</a></li>
-                      <li><a href="/compare" className="hover:text-white transition-colors">Algorithms</a></li>
-                      <li><a href="/upload" className="hover:text-white transition-colors">Upload</a></li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h5 className="text-white mb-4">Resources</h5>
-                    <ul className="space-y-2 text-sm">
-                      <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                      <li><a href="https://github.com/Murali-group/Beeline" className="hover:text-white transition-colors">GitHub</a></li>
-                      <li><a href="https://github.com/ukanduchimeremezejames/WebgenieDark" className="hover:text-white transition-colors">Contact</a></li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h5 className="text-white mb-4">Subscribe</h5>
-                    <p className="text-sm text-gray-400 mb-2">Get updates about new datasets and algorithms</p>
-                    <form className="flex gap-2">
-                      <input type="email" placeholder="Email" className="flex-1 p-2 rounded-lg border border-gray-700 bg-gray-800 text-white text-sm" />
-                      <button type="submit" className="px-4 py-2 bg-purple-600 rounded-lg text-white text-sm hover:bg-purple-700 transition-colors">Subscribe</button>
-                    </form>
-                  </div>
-                </div>
-                
-                <div className="border-t border-gray-700 pt-6 text-center text-sm">
-                  © 2026 WebGenie | Built on the BEELINE Platform. All rights reserved.
-                </div>
-              </div>
-            </footer> */}
 
                   {/* Footer */}
       <footer className="border-t bg-background mt-12">

@@ -24,7 +24,7 @@ import { buildBeelineDataset, BeelineNode } from "../../utils/buildBeelineDatase
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
 // import { Search, Download, Maximize2, Share2, ZoomIn, ZoomOut } from 'lucide-react';
-import { mockNetworkData, mockDatasets, mockInferenceData, generateMockInferenceData } from '.././components/mockData';
+import { generateMockInferenceData } from '.././components/mockData';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
 import graphML from 'cytoscape-graphml';
@@ -241,120 +241,6 @@ const [minConsensus, setMinConsensus] = useState(DEFAULT_FILTERS.minConsensus);
   // const [selectedNode, setSelectedNode] = useState<any>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
-// const filteredEdges = useMemo(() => {
-//   if (!selectedDataset) return [];
-
-//   let edges = [...(selectedDataset.edgesData ?? [])];
-
-//   // 1. Algorithm filter
-//   if (selectedAlgorithms.length > 0) {
-//     edges = edges.filter(edge =>
-//       selectedAlgorithms.every(algo =>
-//         Object.keys(edge.scores ?? {}).includes(algo)
-//       )
-//     );
-//   }
-
-//   if (minConsensus[0] > 1) {
-//     edges = edges.filter(edge =>
-//       Object.keys(edge.scores ?? {}).length >= minConsensus[0]
-//     );
-//   }
-
-
-//   // 3. Edge type filter
-//   if (edgeFilter !== "all") {
-//     edges = edges.filter(edge => edge.type === edgeFilter);
-//   }
-
-
-//   if (scoreThreshold[0] > 0) {
-//   edges = edges.filter(edge => {
-//     const maxScore = Math.max(0, ...Object.values(edge.scores ?? {}));
-//     return maxScore >= scoreThreshold[0];
-//   });
-// }
-
-
-//   // 5. Sort by max score descending
-//   edges.sort((a, b) => {
-//     const aScore = Math.max(0, ...Object.values(a.scores ?? {}));
-//     const bScore = Math.max(0, ...Object.values(b.scores ?? {}));
-//     return bScore - aScore;
-//   });
-
-//   // 6. Top-K
-//   return edges.slice(0, topK[0]);
-
-// }, [
-//   selectedDataset,
-//   selectedAlgorithms,
-//   minConsensus,
-//   edgeFilter,
-//   scoreThreshold,
-//   topK
-// ]);
-
-// const filteredNodes = useMemo(() => {
-//   if (!selectedDataset) return [];
-
-//   const nodeIds = new Set<string>();
-
-//   filteredEdges.forEach(edge => {
-//     nodeIds.add(edge.source);
-//     nodeIds.add(edge.target);
-//   });
-
-//   let nodes = (selectedDataset.nodes ?? []).filter(node =>
-//     nodeIds.has(node.id)
-//   );
-
-//   // Search filter
-//   if (searchTerm.trim() !== "") {
-//     const term = searchTerm.toLowerCase();
-//     nodes = nodes.filter(node =>
-//       node.label.toLowerCase().includes(term) ||
-//       node.id.toLowerCase().includes(term)
-//     );
-//   }
-
-//   return nodes;
-
-// }, [selectedDataset, filteredEdges, searchTerm]);
-
-// const filteredNodes = selectedDataset.nodes.filter(node => {
-//   if (!searchTerm) return true;
-//   return node.label.toLowerCase().includes(searchTerm.toLowerCase());
-// });
-
-// const filteredEdges = useMemo(() => {
-//   if (!selectedDataset) return [];
-
-//   let edges = selectedDataset.edges;
-
-//   // Edge type filter
-//   if (edgeFilter !== "all") {
-//     edges = edges.filter(e => e.type === edgeFilter);
-//   }
-
-//   // Score threshold filter
-//   edges = edges.filter(e =>
-//     Math.max(0, ...Object.values(e.scores ?? {})) >= scoreThreshold[0]
-//   );
-
-//   // Top K filter
-//   edges = edges
-//     .sort(
-//       (a, b) =>
-//         Math.max(0, ...Object.values(b.scores ?? {})) -
-//         Math.max(0, ...Object.values(a.scores ?? {}))
-//     )
-//     .slice(0, topK[0]);
-
-//   return edges;
-
-// }, [selectedDataset, edgeFilter, scoreThreshold, topK]);
-
 const filteredEdges = useMemo(() => {
   if (!selectedDataset) return [];
 
@@ -384,25 +270,6 @@ const filteredEdges = useMemo(() => {
 
 }, [selectedDataset, edgeFilter, scoreThreshold, topK]);
 
-
-// const filteredNodes = useMemo(() => {
-//   if (!selectedDataset) return [];
-
-//   const nodeIdsFromEdges = new Set(
-//     filteredEdges.flatMap(e => [e.source, e.target])
-//   );
-
-//   return selectedDataset.nodes.filter(node => {
-//     const matchesSearch =
-//       !searchTerm ||
-//       node.label.toLowerCase().includes(searchTerm.toLowerCase());
-
-//     const connectedToVisibleEdge = nodeIdsFromEdges.has(node.id);
-
-//     return matchesSearch && connectedToVisibleEdge;
-//   });
-
-// }, [selectedDataset, filteredEdges, searchTerm]);
 
 const filteredNodes = useMemo(() => {
   if (!selectedDataset) return [];
@@ -450,72 +317,6 @@ const filteredData = useMemo(() => {
 console.log("Filtered nodes:", filteredData.nodes.length);
 console.log("Filtered edges:", filteredData.edges.length);
 
-
-
-// const cytoscapeElements = useMemo(() => {
-//   if (!selectedDataset) return [];
-
-//   // Node stats will store degree, best algorithm, and mean score
-//   const nodeStats: Record<string, { degree: number; bestAlgo: string; bestMean: number }> = {};
-
-//   selectedDataset.nodes.forEach((node) => {
-//     // Get all edges connected to this node
-//     const relatedEdges = selectedDataset.edges.filter(
-//       (e) => e.source === node.id || e.target === node.id
-//     );
-
-//     // Compute scores per algorithm
-//     const algoScores: Record<string, number[]> = {};
-//     relatedEdges.forEach((edge) => {
-//       Object.entries(edge.scores ?? {}).forEach(([algo, score]) => {
-//         if (!algoScores[algo]) algoScores[algo] = [];
-//         algoScores[algo].push(Number(score));
-//       });
-//     });
-
-//     // Determine best algorithm and its mean score
-//     let bestAlgo = "";
-//     let bestMean = 0;
-
-//     Object.entries(algoScores).forEach(([algo, scores]) => {
-//       const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-//       if (mean > bestMean) {
-//         bestMean = mean;
-//         bestAlgo = algo;
-//       }
-//     });
-
-//     nodeStats[node.id] = {
-//       degree: relatedEdges.length,
-//       bestAlgo,
-//       bestMean
-//     };
-//   });
-
-//   // Map nodes for Cytoscape
-//   const nodes = selectedDataset.nodes.map((node) => ({
-//     data: {
-//       id: node.id,
-//       label: node.label,
-//       importance: nodeStats[node.id]?.bestMean ?? 0.1,
-//       bestAlgo: nodeStats[node.id]?.bestAlgo ?? "",
-//       bestMean: nodeStats[node.id]?.bestMean ?? 0
-//     }
-//   }));
-
-//   // Map edges
-//   const edges = selectedDataset.edges.map((edge) => ({
-//     data: {
-//       id: `${edge.source}-${edge.target}`,
-//       source: edge.source,
-//       target: edge.target,
-//       type: edge.type,
-//       score: Math.max(0, ...Object.values(edge.scores ?? {}))
-//     }
-//   }));
-
-//   return [...nodes, ...edges];
-// }, [selectedDataset]);
 
 const cytoscapeElements = useMemo(() => {
   if (!selectedDataset) return [];
@@ -608,14 +409,7 @@ const globalDegreeMap = useMemo(() => {
     'target-arrow-shape': 'tee'
   }
 },
-// {
-//   selector: 'edge[type="unknown"]',
-//   style: {
-//     'line-color': '#9ca3af',
-//     'target-arrow-color': '#9ca3af',
-//     'target-arrow-shape': 'triangle'
-//   }
-// },  
+
 {
   selector: 'node[bestAlgo = "algo1"]',
   style: {
@@ -653,16 +447,7 @@ const globalDegreeMap = useMemo(() => {
         'color': '#ffffff'
       }
     },
-    // {
-    //   selector: 'edge',
-    //   style: {
-    //     'width': 2,
-    //     'line-color': '#E4E6EB',
-    //     'target-arrow-color': '#E4E6EB',
-    //     'target-arrow-shape': 'triangle',
-    //     'curve-style': 'bezier'
-    //   }
-    // },
+
     {
   selector: 'edge',
   style: {
@@ -759,23 +544,7 @@ const handleExportJSON = () => {
       };
     }),
 
-    // edges: cy.edges().map((e) => {
-    //   const source = e.source().id();
-    //   const target = e.target().id();
-    //   const data = e.data();
-
-    //   const edgeId = `${source}->${target}`;
-
-    //   return {
-    //     data: {
-    //       ...data,
-    //       source,
-    //       target,
-    //       bestAlgo: deterministicAlgo(edgeId),
-    //       bestMean: deterministicMeanScore(edgeId),
-    //     },
-    //   };
-    // }),
+ 
 
     edges: cy.edges().map((e) => {
   const source = e.source().id();
@@ -792,7 +561,7 @@ const handleExportJSON = () => {
       target,
       bestAlgo: deterministicAlgo(edgeId),
       bestMean: deterministicScore,
-      score: deterministicScore   // 🔥 override the zero score
+      score: deterministicScore   
     },
   };
 }),
@@ -815,88 +584,6 @@ const handleExportJSON = () => {
   saveAs(blob, "network.json");
 };
 
-// const handleExportJSON = () => {
-//   if (!cyRef.current) return;
-
-//   const json = cyRef.current.json();
-//   const blob = new Blob([JSON.stringify(json, null, 2)], {
-//     type: "application/json",
-//   });
-//   saveAs(blob, "network.json");
-// };
-
-// Export CSV (nodes and edges)
-// const handleExportCSV = () => {
-//   if (cyRef.current) {
-//     const nodes = cyRef.current.nodes().map((n) => ({
-//       id: n.id(),
-//       label: n.data('label') || '',
-//       ...n.data(),
-//     }));
-//     const edges = cyRef.current.edges().map((e) => ({
-//       source: e.source().id(),
-//       target: e.target().id(),
-//       ...e.data(),
-//     }));
-
-//     // Convert nodes and edges to CSV format
-//     const arrayToCSV = (arr: Record<string, any>[]) => {
-//       if (!arr.length) return '';
-//       const headers = Object.keys(arr[0]);
-//       const rows = arr.map((row) =>
-//         headers.map((h) => JSON.stringify(row[h] ?? '')).join(',')
-//       );
-//       return [headers.join(','), ...rows].join('\n');
-//     };
-
-//     const csvContent = `# Nodes\n${arrayToCSV(nodes)}\n\n# Edges\n${arrayToCSV(edges)}`;
-//     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-//     const link = document.createElement('a');
-//     link.download = 'network.csv';
-//     link.href = URL.createObjectURL(blob);
-//     link.click();
-//   }
-// };
-
-
-// const handleExportCSV = () => {
-//   if (cyRef.current) {
-//     const nodes = cyRef.current.nodes().map((n) => {
-//       const id = n.id();
-//       const data = n.data();
-//       return {
-//         id,
-//         label: data.label || '',
-//         ...data,
-//         bestAlgo: deterministicAlgo(id),
-//         bestMean: deterministicMeanScore(id),
-//       };
-//     });
-
-//     const edges = cyRef.current.edges().map((e) => ({
-//       source: e.source().id(),
-//       target: e.target().id(),
-//       ...e.data(),
-//     }));
-
-//     // Convert array to CSV
-//     const arrayToCSV = (arr: Record<string, any>[]) => {
-//       if (!arr.length) return '';
-//       const headers = Object.keys(arr[0]);
-//       const rows = arr.map((row) =>
-//         headers.map((h) => JSON.stringify(row[h] ?? '')).join(',')
-//       );
-//       return [headers.join(','), ...rows].join('\n');
-//     };
-
-//     const csvContent = `# Nodes\n${arrayToCSV(nodes)}\n\n# Edges\n${arrayToCSV(edges)}`;
-//     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-//     const link = document.createElement('a');
-//     link.download = 'network.csv';
-//     link.href = URL.createObjectURL(blob);
-//     link.click();
-//   }
-// };
 
 const handleExportCSV = () => {
   if (cyRef.current) {
@@ -1008,13 +695,6 @@ function deterministicMeanScore(id: string): number {
   return parseFloat(score.toFixed(3));
 }
 
-// function topologyMeanScore(node: BeelineNode): number {
-//   const base = node.importance ?? 1;
-//   const normalized = Math.min(base / 10, 1); // importance 10+ => 1.0
-//   const score = 0.5 + normalized * 0.4;
-//   return parseFloat(score.toFixed(3));
-// }
-
 
   useEffect(() => {
   if (cyRef.current) {
@@ -1102,37 +782,12 @@ useEffect(() => {
           </SelectContent>
         </Select>
 
-        {/* <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge
-              variant="secondary"
-              className="h-9 px-3 text-xs font-medium cursor-default select-none bg-muted text-foreground border border-border"
-              
-            >
-              Multi-Algorithm Inference Mode
-            </Badge>
-          </TooltipTrigger>
-
-          <TooltipContent className="max-w-xs text-sm leading-relaxed">
-            WebGenie’s Explorer operates in multi-algorithm inference mode. 
-            For each node and edge, multiple GRN inference algorithms are evaluated, 
-            and the highest-performing method is selected while generating 
-            deterministic mean confidence scores.
-          </TooltipContent>
-        </Tooltip> */}
-
                 
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="relative inline-block group">
 
-                          {/* <Badge
-              variant="secondary"
-              className="relative flex items-center gap-2 h-9 px-3 text-xs font-medium 
-                        cursor-default select-none bg-muted text-foreground 
-                        border border-border"
-            > */}
-
+      
               <Badge
                 variant="secondary"
                 className="h-8 px-3 text-xs font-medium cursor-default select-none
@@ -1198,12 +853,6 @@ useEffect(() => {
           </TooltipContent>
         </Tooltip>
 
-        
-
-
-        {/* <Badge variant="default" className='h-9 p-3'>
-          Multi-Algorithm Inference Mode
-        </Badge> */}
       </div>
     </div>
 
@@ -1375,14 +1024,7 @@ useEffect(() => {
               <Button
                 variant="outline"
                 className="w-full"
-                // onClick={() => {
-                //   setSearchTerm(DEFAULT_FILTERS.searchTerm);
-                //   setEdgeFilter(DEFAULT_FILTERS.edgeFilter);
-                //   setTopK([...DEFAULT_FILTERS.topK]);
-                //   setScoreThreshold([...DEFAULT_FILTERS.scoreThreshold]);
-                //   setSelectedAlgorithms([...DEFAULT_FILTERS.selectedAlgorithms]);
-                //   setMinConsensus([...DEFAULT_FILTERS.minConsensus]);
-                // }}
+
 
                 onClick={() => {
                   setSearchTerm("");
@@ -1457,14 +1099,6 @@ useEffect(() => {
                 cy={(cy) => (cyRef.current = cy)}
                 layout={{ name: layout }}
               />
-
-              {/* <CytoscapeComponent
-                key={`${selectedDataset?.name}-${scoreThreshold[0]}-${topK[0]}-${edgeFilter}-${searchTerm}`}
-                elements={cytoscapeElements}
-                layout={{ name: layout, fit: true }}
-                style={{ width: "100%", height: "600px" }}
-              /> */}
-
 
               
             </div>
@@ -1541,115 +1175,6 @@ useEffect(() => {
                 </div>
               </Card>
             )}
-            
-
-          {/* {selectedNode && selectedDataset && (
-            <Card className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-foreground">Node Details</h3>
-                  <p className="text-sm text-gray-600">Selected gene information</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedNode(null)}
-                >
-                  ×
-                </Button>
-              </div> */}
-
-              {/* --- Node Attributes --- */}
-              {/* <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Gene ID</p>
-                  <p className="text-foreground">{selectedNode.id}</p>
-                </div>
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Gene Name</p>
-                  <p className="text-foreground"><strong>{selectedNode.label}</strong></p>
-                </div>
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Importance Score</p>
-                  <p className="text-foreground">{selectedNode.importance?.toFixed(3)}</p>
-                </div>
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Degree</p>
-                  <p className="text-foreground">
-                    {filteredData.edges.filter(
-                      e => e.source === selectedNode.id || e.target === selectedNode.id
-                    ).length}
-                  </p>
-                </div>
-              </div> */}
-
-              {/* --- Neighbors --- */}
-              {/* <div className="mt-4 p-4 bg-secondary rounded-lg">
-                <p className="text-xs text-gray-600 mb-2">Neighbors</p>
-                <div className="flex flex-wrap gap-2">
-                  {filteredData.edges
-                    .filter(e => e.source === selectedNode.id || e.target === selectedNode.id)
-                    .map((edge, idx) => {
-                      const neighborId = edge.source === selectedNode.id ? edge.target : edge.source;
-                      const neighbor = selectedDataset.nodes.find(n => n.id === neighborId);
-                      return (
-                        <Badge key={idx} variant="secondary" className='text-foreground'>
-                          {neighbor?.label || neighborId}
-                        </Badge>
-                      );
-                    })}
-                </div>
-              </div> */}
-
-              {/* --- Optional: Best Algorithm + Mean Score --- */}
-              {/* <div className="mt-4 p-4 bg-secondary rounded-lg">
-                <p className="text-xs text-gray-600 mb-2">Inference Info</p>
-                {selectedNode.bestAlgo && (
-                  <p className="text-foreground">
-                    Best Algorithm: {selectedNode.bestAlgo}, Mean Score: {selectedNode.bestMean?.toFixed(3)}
-                  </p>
-                  
-                )}
-              </div>
-            </Card>
-          )}
-          {selectedEdge && (
-            <Card className="p-6">
-              <h3>Regulatory Relationship</h3>
-
-              <div>
-                <strong>{selectedEdge.source}</strong>
-                {" → "}
-                <strong>{selectedEdge.target}</strong>
-              </div>
-
-              <p>Type: {selectedEdge.type}</p>
-              <p>Supported by {selectedEdge.consensus} algorithms</p>
-
-              <div className="mt-3">
-                {Object.entries(selectedEdge.scores).map(([algo, score]) => (
-                  <Badge key={algo} variant="secondary">
-                    {algo}: {score.toFixed(2)}
-                  </Badge>
-                ))}
-              </div>
-            </Card>
-          )} */}
-           
-              {/* <div className="mt-6 p-3 rounded-lg bg-accent/50 border">
-                <h4 className="font-semibold text-sm mb-2">Focus Options</h4>
-                <div className="space-y-2 text-sm">
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-accent transition-colors">
-                    Expand 1-hop neighborhood
-                  </button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-accent transition-colors">
-                    Show all paths to target
-                  </button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-accent transition-colors">
-                    Hide unconnected nodes
-                  </button>
-                </div>
-              </div> */}
 
               <div className="mt-6">
                 <h4 className="font-semibold text-sm mb-3">Export</h4>
