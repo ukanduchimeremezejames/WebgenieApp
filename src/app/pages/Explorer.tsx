@@ -917,7 +917,7 @@ setSelectedNodeInfo({
   };
 }, [cyRef, filteredData]);
 
-const [tultip, setTultip] = useState(null);
+// const [tultip, setTultip] = useState(null);
 const [tooltip, setTooltip] = useState(null);
 
 
@@ -1287,12 +1287,12 @@ const [tooltip, setTooltip] = useState(null);
                   const node = evt.target;
                   const position = node.renderedPosition();
 
-                  setTultip({
-                    x: position.x,
-                    y: position.y,
-                    text:
-                      "Edge score = raw confidence value produced by the inference algorithm (not normalized).",
-                  });
+                  // setTultip({
+                  //   x: position.x,
+                  //   y: position.y,
+                  //   text:
+                  //     "Edge score = raw confidence value produced by the inference algorithm (not normalized).",
+                  // });
                 });
 
                 cy.on("unselect", "node", function () {
@@ -1326,7 +1326,7 @@ const [tooltip, setTooltip] = useState(null);
   layout={{ name: layout }}
 />
 
-{tultip && (
+{/* {tultip && (
   <div
     style={{
       position: "absolute",
@@ -1343,7 +1343,7 @@ const [tooltip, setTooltip] = useState(null);
   >
     {tultip.text}
   </div>
-)}
+)} */}
               
             </div>
           </Card>
@@ -1452,6 +1452,42 @@ const [tooltip, setTooltip] = useState(null);
                   </div>
                   
                 </div>
+
+                <div className="mt-0 p-4 bg-secondary rounded-lg space-y-2">
+                  
+                  {/* Incoming Neighbors */}
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Incoming</p>
+                    <div className="flex flex-wrap gap-2 text-foreground">
+                      {selectedNodeInfo.incomingNeighbors?.slice(0, 5).map((neighbor, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-foreground">
+                          {neighbor}
+                        </Badge>
+                      ))}
+                      {selectedNodeInfo.incomingNeighbors && selectedNodeInfo.incomingNeighbors.length > 5 && (
+                        <Badge variant="secondary" className="text-foreground">
+                          +{selectedNodeInfo.incomingNeighbors.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  
+                </div>
+
+                {/* <div className="mt-0 p-4 bg-secondary rounded-lg">
+                  <p className="text-xs text-gray-600 mb-2">
+                    Neighbors
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-foreground">
+                    {selectedNodeInfo.neighbors?.slice(0, 5).map((neighbor, idx) => (
+                      <Badge key={idx} variant="secondary" className='text-foreground'>
+                        {neighbor}
+                      </Badge>
+                    ))}
+                    
+                  </div>
+                </div> */}
               </Card>
             )}
 
