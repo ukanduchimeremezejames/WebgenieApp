@@ -27,7 +27,7 @@ const allDatasets = [
   {
     id: 'GSD',
     name: 'GSD',
-    organism: 'N/A',
+    organism: 'Human',
     type: 'curated',
     genes: 18,
     cells: 120,
@@ -39,7 +39,7 @@ const allDatasets = [
   {
     id: 'HSC',
     name: 'HSC',
-    organism: 'N/A',
+    organism: 'Mouse',
     type: 'curated',
     genes: 11,
     cells: 110,
@@ -51,7 +51,7 @@ const allDatasets = [
   {
     id: 'mCAD',
     name: 'mCAD',
-    organism: 'N/A',
+    organism: 'Mouse',
     type: 'curated',
     genes: 5,
     cells: 100,
@@ -63,7 +63,7 @@ const allDatasets = [
   {
     id: 'VSC',
     name: 'VSC',
-    organism: 'N/A',
+    organism: 'Mouse',
     type: 'curated',
     genes: 8,
     cells: 115,
@@ -167,7 +167,7 @@ const allDatasets = [
   {
     id: 'dyn-LL',
     name: 'Dynamic LL',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 18,
     cells: 140,
@@ -179,7 +179,7 @@ const allDatasets = [
   {
     id: 'dyn-LI',
     name: 'Dynamic LI',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 7,
     cells: 115,
@@ -191,7 +191,7 @@ const allDatasets = [
   {
     id: 'dyn-TF',
     name: 'Dynamic TF',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 7,
     cells: 118,
@@ -203,7 +203,7 @@ const allDatasets = [
   {
     id: 'dyn-BF',
     name: 'Dynamic BF',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 5,
     cells: 105,
@@ -215,7 +215,7 @@ const allDatasets = [
   {
     id: 'dyn-BFC',
     name: 'Dynamic BFC',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 9,
     cells: 125,
@@ -227,7 +227,7 @@ const allDatasets = [
   {
     id: 'dyn-CY',
     name: 'Dynamic CY',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 5,
     cells: 110,

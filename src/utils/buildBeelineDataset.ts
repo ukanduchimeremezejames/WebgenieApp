@@ -1,51 +1,3 @@
-// export interface BeelineEdge {
-//   source: string;
-//   target: string;
-//   type: "activation" | "repression";
-// }
-
-// export interface BeelineNode {
-//   id: string;
-//   label: string;
-//   importance: number;
-// }
-
-// export interface BeelineNode {
-//   id: string;
-//   label: string;
-//   importance: number;
-//   inDegree: number;
-//   outDegree: number;
-//   degree: number;
-//   neighbors: string[];
-//   activators: string[];
-//   repressors: string[];
-//   bestAlgo?: string;
-//   bestMean?: number;
-// }
-
-
-// export function buildBeelineDataset(edges: BeelineEdge[]) {
-//   const nodeMap = new Map<string, number>();
-
-//   edges.forEach((edge) => {
-//     nodeMap.set(edge.source, (nodeMap.get(edge.source) ?? 0) + 1);
-//     nodeMap.set(edge.target, (nodeMap.get(edge.target) ?? 0) + 1);
-//   });
-
-//   const nodes: BeelineNode[] = Array.from(nodeMap.entries()).map(
-//     ([id, degree]) => ({
-//       id,
-//       label: id,
-//       importance: degree
-//     })
-//   );
-
-//   return {
-//     nodes,
-//     edges
-//   };
-// }
 
 export interface BeelineEdge {
   source: string;
@@ -67,19 +19,122 @@ export interface BeelineNode {
   bestMean?: number;
 }
 
+
+
+function getStorageKey(datasetId: string) {
+  return `beeline_inference_${datasetId}`;
+}
 const ALGORITHMS = ["GENIE3", "GRNBoost2", "PIDC"];
+
+// function addRandomInferenceToEdges(edges: BeelineEdge[]): BeelineEdge[] {
+//   return edges.map(edge => {
+//     const scores: Record<string, number> = {};
+//     ALGORITHMS.forEach(algo => {
+//       // realistic range 0.5–1.0
+//       scores[algo] = parseFloat((0.5 + Math.random() * 0.5).toFixed(3));
+//     });
+
+//     // pick best
+//     let bestAlgo = "";
+//     let bestMean = -Infinity;
+//     Object.entries(scores).forEach(([algo, score]) => {
+//       if (score > bestMean) {
+//         bestMean = score;
+//         bestAlgo = algo;
+//       }
+//     });
+
+//     return { ...edge, bestAlgo, bestMean };
+//   });
+// }
+
+// function addNodeInference(nodes: BeelineNode[], edges: BeelineEdge[]): BeelineNode[] {
+//   return nodes.map(node => {
+//     const relatedEdges = edges.filter(e => e.source === node.id || e.target === node.id);
+
+//     const algoSums: Record<string, number> = {};
+//     const algoCounts: Record<string, number> = {};
+
+//     relatedEdges.forEach(edge => {
+//       const { bestAlgo, bestMean } = edge;
+//       if (!bestAlgo || bestMean === undefined) return;
+//       algoSums[bestAlgo] = (algoSums[bestAlgo] ?? 0) + bestMean;
+//       algoCounts[bestAlgo] = (algoCounts[bestAlgo] ?? 0) + 1;
+//     });
+
+//     let nodeBestAlgo = "";
+//     let nodeBestMean = -Infinity;
+//     Object.keys(algoSums).forEach(algo => {
+//       const mean = algoSums[algo] / algoCounts[algo];
+//       if (mean > nodeBestMean) {
+//         nodeBestMean = mean;
+//         nodeBestAlgo = algo;
+//       }
+//     });
+
+//     return { ...node, bestAlgo: nodeBestAlgo, bestMean: parseFloat(nodeBestMean.toFixed(3)) };
+//   });
+// }
+
+// export function buildBeelineDataset(edges: BeelineEdge[]) {
+//   const nodeMap = new Map<string, number>();
+
+//   edges.forEach((edge) => {
+//     nodeMap.set(edge.source, (nodeMap.get(edge.source) ?? 0) + 1);
+//     nodeMap.set(edge.target, (nodeMap.get(edge.target) ?? 0) + 1);
+//   });
+
+//   const nodes: BeelineNode[] = Array.from(nodeMap.entries()).map(
+//     ([id, degree]) => ({
+//       id,
+//       label: id,
+//       importance: degree ?? 1
+//     })
+//   );
+
+//   // --- Step 1: Add neighbors & degree
+//   nodes.forEach(node => {
+//     node.neighbors = edges
+//       .filter(e => e.source === node.id || e.target === node.id)
+//       .map(e => (e.source === node.id ? e.target : e.source));
+//     node.degree = node.neighbors.length;
+//   });
+
+//   // --- Step 2: Add simulated inference for edges
+//   const edgesWithInference = addRandomInferenceToEdges(edges);
+
+//   // --- Step 3: Add node-level bestAlgo + bestMean
+//   const nodesWithInference = addNodeInference(nodes, edgesWithInference);
+
+//   return {
+//     nodes: nodesWithInference,
+//     edges: edgesWithInference
+//   };
+// }
+
+function generateInferenceScore(): number {
+  const r = Math.random();
+
+  // 85% weak edges, 15% stronger edges
+  const value =
+    r < 0.85
+      ? Math.pow(Math.random(), 4) * 0.2       // mostly 0.000–0.2
+      : 0.2 + Math.pow(Math.random(), 2) * 0.8; // rare strong edges
+
+  return parseFloat(value.toFixed(4));
+}
 
 function addRandomInferenceToEdges(edges: BeelineEdge[]): BeelineEdge[] {
   return edges.map(edge => {
     const scores: Record<string, number> = {};
+
     ALGORITHMS.forEach(algo => {
-      // realistic range 0.5–1.0
-      scores[algo] = parseFloat((0.5 + Math.random() * 0.5).toFixed(3));
+      scores[algo] = generateInferenceScore();
     });
 
-    // pick best
     let bestAlgo = "";
     let bestMean = -Infinity;
+
     Object.entries(scores).forEach(([algo, score]) => {
       if (score > bestMean) {
         bestMean = score;
@@ -87,26 +142,39 @@ function addRandomInferenceToEdges(edges: BeelineEdge[]): BeelineEdge[] {
       }
     });
 
-    return { ...edge, bestAlgo, bestMean };
+    return {
+      ...edge,
+      bestAlgo,
+      bestMean: parseFloat(bestMean.toFixed(4))
+    };
   });
 }
 
-function addNodeInference(nodes: BeelineNode[], edges: BeelineEdge[]): BeelineNode[] {
+function addNodeInference(
+  nodes: BeelineNode[],
+  edges: BeelineEdge[]
+): BeelineNode[] {
   return nodes.map(node => {
-    const relatedEdges = edges.filter(e => e.source === node.id || e.target === node.id);
+    const relatedEdges = edges.filter(
+      e => e.source === node.id || e.target === node.id
+    );
 
     const algoSums: Record<string, number> = {};
     const algoCounts: Record<string, number> = {};
 
     relatedEdges.forEach(edge => {
-      const { bestAlgo, bestMean } = edge;
-      if (!bestAlgo || bestMean === undefined) return;
-      algoSums[bestAlgo] = (algoSums[bestAlgo] ?? 0) + bestMean;
-      algoCounts[bestAlgo] = (algoCounts[bestAlgo] ?? 0) + 1;
+      if (!edge.bestAlgo || edge.bestMean === undefined) return;
+
+      algoSums[edge.bestAlgo] =
+        (algoSums[edge.bestAlgo] ?? 0) + edge.bestMean;
+
+      algoCounts[edge.bestAlgo] =
+        (algoCounts[edge.bestAlgo] ?? 0) + 1;
     });
 
     let nodeBestAlgo = "";
-    let nodeBestMean = -Infinity;
+    let nodeBestMean = 0;
+
     Object.keys(algoSums).forEach(algo => {
       const mean = algoSums[algo] / algoCounts[algo];
       if (mean > nodeBestMean) {
@@ -115,14 +183,18 @@ function addNodeInference(nodes: BeelineNode[], edges: BeelineEdge[]): BeelineNo
       }
     });
 
-    return { ...node, bestAlgo: nodeBestAlgo, bestMean: parseFloat(nodeBestMean.toFixed(3)) };
+    return {
+      ...node,
+      bestAlgo: nodeBestAlgo,
+      bestMean: parseFloat(nodeBestMean.toFixed(4))
+    };
   });
 }
 
 export function buildBeelineDataset(edges: BeelineEdge[]) {
   const nodeMap = new Map<string, number>();
 
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     nodeMap.set(edge.source, (nodeMap.get(edge.source) ?? 0) + 1);
     nodeMap.set(edge.target, (nodeMap.get(edge.target) ?? 0) + 1);
   });
@@ -135,76 +207,134 @@ export function buildBeelineDataset(edges: BeelineEdge[]) {
     })
   );
 
-  // --- Step 1: Add neighbors & degree
-  nodes.forEach(node => {
-    node.neighbors = edges
-      .filter(e => e.source === node.id || e.target === node.id)
-      .map(e => (e.source === node.id ? e.target : e.source));
-    node.degree = node.neighbors.length;
-  });
+// --- Add neighbors & degree + in/out degree
+nodes.forEach(node => {
+  // Neighbors (undirected)
+  node.neighbors = edges
+    .filter(e => e.source === node.id || e.target === node.id)
+    .map(e => (e.source === node.id ? e.target : e.source));
 
-  // --- Step 2: Add simulated inference for edges
+  // Degrees
+  node.outDegree = edges.filter(e => e.source === node.id).length;
+  node.inDegree = edges.filter(e => e.target === node.id).length;
+  node.degree = node.inDegree + node.outDegree;
+});
+
+  // --- Add inference to edges
   const edgesWithInference = addRandomInferenceToEdges(edges);
 
-  // --- Step 3: Add node-level bestAlgo + bestMean
-  const nodesWithInference = addNodeInference(nodes, edgesWithInference);
+  // --- Compute edge score range from bestMean
+  const edgeScores = edgesWithInference
+    .map(e => e.bestMean)
+    .filter((v): v is number => v !== undefined);
+
+  const minEdgeScore = edgeScores.length
+    ? Math.min(...edgeScores)
+    : 0;
+
+  const maxEdgeScore = edgeScores.length
+    ? Math.max(...edgeScores)
+    : 0;
+
+  // --- Add node-level inference
+  const nodesWithInference = addNodeInference(
+    nodes,
+    edgesWithInference
+  );
+
+  // --- Compute node score range
+  const nodeScores = nodesWithInference
+    .map(n => n.bestMean)
+    .filter((v): v is number => v !== undefined);
+
+  const minNodeScore = nodeScores.length
+    ? Math.min(...nodeScores)
+    : 0;
+
+  const maxNodeScore = nodeScores.length
+    ? Math.max(...nodeScores)
+    : 0;
 
   return {
     nodes: nodesWithInference,
-    edges: edgesWithInference
+    edges: edgesWithInference,
+    scoreRange: {
+      edges: [
+        parseFloat(minEdgeScore.toFixed(4)),
+        parseFloat(maxEdgeScore.toFixed(4))
+      ],
+      nodes: [
+        parseFloat(minNodeScore.toFixed(4)),
+        parseFloat(maxNodeScore.toFixed(4))
+      ]
+    }
   };
 }
 
 
-
 // export function buildBeelineDataset(edges: BeelineEdge[]) {
-//   const nodeMap = new Map<string, BeelineNode>();
+//   const nodeMap = new Map<string, number>();
 
-//   function ensureNode(id: string) {
-//     if (!nodeMap.has(id)) {
-//       nodeMap.set(id, {
-//         id,
-//         label: id,
-//         importance: 0,
-//         inDegree: 0,
-//         outDegree: 0,
-//         degree: 0,
-//         neighbors: [],
-//         activators: [],
-//         repressors: []
-//       });
-//     }
-//     return nodeMap.get(id)!;
-//   }
-
-//   edges.forEach(edge => {
-//     const source = ensureNode(edge.source);
-//     const target = ensureNode(edge.target);
-
-//     // Degrees
-//     source.outDegree++;
-//     target.inDegree++;
-
-//     // Neighbor tracking
-//     source.neighbors.push(target.id);
-//     target.neighbors.push(source.id);
-
-//     // Edge type tracking
-//     if (edge.type === "activation") {
-//       target.activators.push(source.id);
-//     } else {
-//       target.repressors.push(source.id);
-//     }
+//   edges.forEach((edge) => {
+//     nodeMap.set(edge.source, (nodeMap.get(edge.source) ?? 0) + 1);
+//     nodeMap.set(edge.target, (nodeMap.get(edge.target) ?? 0) + 1);
 //   });
 
-//   // Final calculations
-//   nodeMap.forEach(node => {
-//     node.degree = node.inDegree + node.outDegree;
-//     node.importance = node.degree; // or replace with centrality later
+//   const nodes: BeelineNode[] = Array.from(nodeMap.entries()).map(
+//     ([id, degree]) => ({
+//       id,
+//       label: id,
+//       importance: degree ?? 1
+//     })
+//   );
+
+//   // --- Step 1: Add neighbors & degree
+//   nodes.forEach(node => {
+//     node.neighbors = edges
+//       .filter(e => e.source === node.id || e.target === node.id)
+//       .map(e => (e.source === node.id ? e.target : e.source));
+//     node.degree = node.neighbors.length;
 //   });
+
+
+//   const edgesWithInference = addRandomInferenceToEdges(edges);
+
+
+//   const edgeScores = edgesWithInference
+//     .map(e => e.bestMean)
+//     .filter((v): v is number => v !== undefined);
+
+//   const minEdgeScore = edgeScores.length
+//     ? Math.min(...edgeScores)
+//     : 0;
+
+//   const maxEdgeScore = edgeScores.length
+//     ? Math.max(...edgeScores)
+//     : 1;
+
+//   const nodesWithInference = addNodeInference(nodes, edgesWithInference);
+
+
+//   const nodeScores = nodesWithInference
+//     .map(n => n.bestMean)
+//     .filter((v): v is number => v !== undefined);
+
+//   const minNodeScore = nodeScores.length
+//     ? Math.min(...nodeScores)
+//     : 0;
+
+//   const maxNodeScore = nodeScores.length
+//     ? Math.max(...nodeScores)
+//     : 1;
 
 //   return {
-//     nodes: Array.from(nodeMap.values()),
-//     edges
+//     nodes: nodesWithInference,
+//     edges: edgesWithInference,
+
+//     // 👇 dataset-level metadata
+//     scoreRange: {
+//       edges: [parseFloat(minEdgeScore.toFixed(3)), parseFloat(maxEdgeScore.toFixed(3))],
+//       nodes: [parseFloat(minNodeScore.toFixed(3)), parseFloat(maxNodeScore.toFixed(3))]
+//     }
 //   };
 // }

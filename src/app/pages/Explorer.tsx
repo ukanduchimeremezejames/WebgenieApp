@@ -23,12 +23,20 @@ import { buildBeelineDataset, BeelineNode } from "../../utils/buildBeelineDatase
 // import { Badge } from './Badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
-// import { Search, Download, Maximize2, Share2, ZoomIn, ZoomOut } from 'lucide-react';
 import { generateMockInferenceData } from '.././components/mockData';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
 import graphML from 'cytoscape-graphml';
 import { saveAs } from "file-saver";
+import popper from "cytoscape-popper";
+import tippy from "tippy.js";
+import "tippy.js/dist/tippy.css";
+
+
+cytoscape.use(popper);
+
+const TOOLTIP_TEXT =
+  "Edge score = raw confidence value produced by the inference algorithm (not normalized).";
 
 
 const GSDDataset = buildBeelineDataset(GSD);
@@ -118,26 +126,30 @@ const datasetsArray = [
   // other datasets if needed
 ];
 
+console.log("Datasets loaded:", datasetsArray);
+// console.log(datasetsArray.map(d => ({ id: d.id, nodes: d.nodes.length, edges: d.edges.length })));
 
 export function Explorer() {
   
-
   const DEFAULT_FILTERS = {
   searchTerm: "",
   edgeFilter: "all",
   topK: [50],
-  scoreThreshold: [0],
+  scoreThreshold: [0.0],
   selectedAlgorithms: [] as string[],
   minConsensus: [1]
 };
 
-  
+ 
 interface NodeInfo {
   id: string;
   degree: number;
-  neighbors: string[];
+  inDegree: number;
+  outDegree: number;
   bestAlgo: string;
   bestMean: number;
+  incomingNeighbors: string[];
+  outgoingNeighbors: string[];
 }
 
 const [activeAlgorithm, setActiveAlgorithm] = useState<string>("GENIE3");
@@ -146,9 +158,137 @@ const [selectedNodeInfo, setSelectedNodeInfo] = useState<NodeInfo | null>(null);
 
 const [selectedDatasetId, setSelectedDatasetId] = useState("dyn-bf");
 
+// const selectedDataset = useMemo(() => {
+//   return datasetsArray.find(d => d.id === selectedDatasetId);
+// }, [selectedDatasetId]);
+
+// --- Inside Explorer.tsx ---
 const selectedDataset = useMemo(() => {
-  return datasetsArray.find(d => d.id === selectedDatasetId);
-}, [selectedDatasetId]);
+  if (!selectedDatasetId) return null;
+
+  // Try to find dataset
+  const dataset = datasetsArray.find(d => d.id === selectedDatasetId);
+  if (!dataset) return null;
+
+  const storageKey = `beeline_scores_${selectedDatasetId}`;
+
+  // --- Check localStorage
+  let edgesWithInference: BeelineEdge[] | null = null;
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        edgesWithInference = parsed;
+      }
+    }
+  } catch {
+    edgesWithInference = null;
+  }
+
+  // --- If nothing in storage, generate fresh
+  if (!edgesWithInference || edgesWithInference.length === 0) {
+    edgesWithInference = dataset.edges.map(edge => {
+      const scores: Record<string, number> = {};
+      const ALGORITHMS = ["GENIE3", "GRNBoost2", "PIDC"];
+
+      // realistic small skewed scores
+      ALGORITHMS.forEach(algo => {
+        const r = Math.random();
+        const value =
+          r < 0.85
+            ? 0.01 + Math.random() * 0.14 // weak: 0.01–0.15
+            : 0.15 + Math.random() * 0.45; // strong: 0.15–0.60
+        scores[algo] = parseFloat(value.toFixed(4));
+      });
+
+      // pick best
+      let bestAlgo = "";
+      let bestMean = -Infinity;
+      Object.entries(scores).forEach(([algo, score]) => {
+        if (score > bestMean) {
+          bestMean = score;
+          bestAlgo = algo;
+        }
+      });
+
+      return { ...edge, bestAlgo, bestMean: parseFloat(bestMean.toFixed(4)) };
+    });
+
+    // save to localStorage
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(edgesWithInference));
+    } catch {}
+  }
+
+  // --- Build node-level inference
+  const nodeMap = new Map<string, number>();
+  edgesWithInference.forEach(edge => {
+    nodeMap.set(edge.source, (nodeMap.get(edge.source) ?? 0) + 1);
+    nodeMap.set(edge.target, (nodeMap.get(edge.target) ?? 0) + 1);
+  });
+
+  const nodes: BeelineNode[] = Array.from(nodeMap.entries()).map(
+    ([id, degree]) => ({ id, label: id, importance: degree ?? 1 })
+  );
+
+  nodes.forEach(node => {
+    node.neighbors = edgesWithInference
+      .filter(e => e.source === node.id || e.target === node.id)
+      .map(e => (e.source === node.id ? e.target : e.source));
+    node.degree = node.neighbors.length;
+  });
+
+  // --- Node-level bestMean
+  const nodesWithInference = nodes.map(node => {
+    const relatedEdges = edgesWithInference.filter(
+      e => e.source === node.id || e.target === node.id
+    );
+
+    const algoSums: Record<string, number> = {};
+    const algoCounts: Record<string, number> = {};
+
+    relatedEdges.forEach(edge => {
+      if (!edge.bestAlgo || edge.bestMean === undefined) return;
+      algoSums[edge.bestAlgo] = (algoSums[edge.bestAlgo] ?? 0) + edge.bestMean;
+      algoCounts[edge.bestAlgo] = (algoCounts[edge.bestAlgo] ?? 0) + 1;
+    });
+
+    let nodeBestAlgo = "";
+    let nodeBestMean = 0;
+    Object.keys(algoSums).forEach(algo => {
+      const mean = algoSums[algo] / algoCounts[algo];
+      if (mean > nodeBestMean) {
+        nodeBestMean = mean;
+        nodeBestAlgo = algo;
+      }
+    });
+
+    return { ...node, bestAlgo: nodeBestAlgo, bestMean: parseFloat(nodeBestMean.toFixed(4)) };
+  });
+
+  // --- Compute edge score range
+  const edgeScores = edgesWithInference.map(e => e.bestMean).filter(v => typeof v === "number");
+  const minEdge = edgeScores.length ? Math.min(...edgeScores) : 0;
+  const maxEdge = edgeScores.length ? Math.max(...edgeScores) : 0;
+
+  return {
+    ...dataset,
+    edges: edgesWithInference,
+    nodes: nodesWithInference,
+    scoreRange: {
+      edges: [minEdge, maxEdge],
+      nodes: [
+        nodesWithInference.length
+          ? Math.min(...nodesWithInference.map(n => n.bestMean))
+          : 0,
+        nodesWithInference.length
+          ? Math.max(...nodesWithInference.map(n => n.bestMean))
+          : 0
+      ]
+    }
+  };
+}, [selectedDatasetId, datasetsArray]);
 
 const inferenceData = useMemo(() => {
   if (!selectedDataset) return null; // or [] depending on return type
@@ -241,35 +381,62 @@ const [minConsensus, setMinConsensus] = useState(DEFAULT_FILTERS.minConsensus);
   // const [selectedNode, setSelectedNode] = useState<any>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
+// const filteredEdges = useMemo(() => {
+//   if (!selectedDataset) return [];
+
+//   let edges = [...selectedDataset.edges]; 
+
+//   // Edge type
+//   if (edgeFilter !== "all") {
+//     edges = edges.filter(e => e.type === edgeFilter);
+//   }
+
+//   // Score threshold
+//   edges = edges.filter(e =>
+//     Math.max(0.5, ...Object.values(e.scores ?? {})) >= scoreThreshold[0]
+//   );
+
+//   // Sort by score
+//   edges.sort(
+//     (a, b) =>
+//       Math.max(0, ...Object.values(b.scores ?? {})) -
+//       Math.max(0, ...Object.values(a.scores ?? {}))
+//   );
+
+//   // TopK
+//   edges = edges.slice(0, topK[0]);
+
+//   return edges;
+
+// }, [selectedDataset, edgeFilter, scoreThreshold, topK]);
+
 const filteredEdges = useMemo(() => {
   if (!selectedDataset) return [];
 
-  let edges = [...selectedDataset.edges]; // always clone fresh
+  // Copy edges
+  let edges = [...selectedDataset.edges];
 
   // Edge type
   if (edgeFilter !== "all") {
     edges = edges.filter(e => e.type === edgeFilter);
   }
 
-  // Score threshold
-  edges = edges.filter(e =>
-    Math.max(0, ...Object.values(e.scores ?? {})) >= scoreThreshold[0]
-  );
+  // Sort edges descending by bestMean
+  edges.sort((a, b) => (b.bestMean ?? 0) - (a.bestMean ?? 0));
 
-  // Sort by score
-  edges.sort(
-    (a, b) =>
-      Math.max(0, ...Object.values(b.scores ?? {})) -
-      Math.max(0, ...Object.values(a.scores ?? {}))
-  );
+  // --- Gradual threshold: take edges above the threshold
+  // threshold: 0–1, scaled to min-max in dataset
+  const minScore = Math.min(...edges.map(e => e.bestMean ?? 0));
+  const maxScore = Math.max(...edges.map(e => e.bestMean ?? 0));
+  const scaledThreshold = minScore + scoreThreshold[0] * (maxScore - minScore);
+
+  edges = edges.filter(e => (e.bestMean ?? 0) >= scaledThreshold);
 
   // TopK
   edges = edges.slice(0, topK[0]);
 
   return edges;
-
 }, [selectedDataset, edgeFilter, scoreThreshold, topK]);
-
 
 const filteredNodes = useMemo(() => {
   if (!selectedDataset) return [];
@@ -324,7 +491,13 @@ const cytoscapeElements = useMemo(() => {
   const nodes = filteredNodes.map((node) => ({
     data: {
       id: node.id,
-      label: node.label
+      label: node.label,
+      degree: node.degree,
+      inDegree: node.inDegree,
+      outDegree: node.outDegree,
+      bestAlgo: node.bestAlgo,
+      bestMean: node.bestMean,
+      neighbors: node.neighbors
     }
   }));
 
@@ -341,7 +514,6 @@ const cytoscapeElements = useMemo(() => {
   return [...nodes, ...edges];
 
 }, [filteredNodes, filteredEdges]);
-
 
 const limitedEdges = useMemo(() => {
   return filteredEdges
@@ -584,7 +756,6 @@ const handleExportJSON = () => {
   saveAs(blob, "network.json");
 };
 
-
 const handleExportCSV = () => {
   if (cyRef.current) {
     const nodes = cyRef.current.nodes().map((n) => {
@@ -635,7 +806,6 @@ const handleExportCSV = () => {
   }
 };
 
-
 // Export GraphML
 const handleExportGraphML = () => {
   if (cyRef.current) {
@@ -652,7 +822,6 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
   const [showOverlay, setShowOverlay] = useState(false);
   const [tfOnlyView, setTfOnlyView] = useState(false);
   const [showModules, setShowModules] = useState(true);
-  // const [scoreThreshold, setScoreThreshold] = useState(0.5);
   const [edgeType, setEdgeType] = useState<'all' | 'activation' | 'inhibition'>('all');
   const [selectedGene, setSelectedGene] = useState('');
   const [selectedEdge, setSelectedEdge] = useState<any>(null);
@@ -681,7 +850,6 @@ function simpleHash(str: string): number {
   return hash;
 }
 
-
 function deterministicAlgo(id: string): string {
   const hash = simpleHash(id);
   const index = hash % BEELINE_ALGORITHMS.length;
@@ -694,55 +862,64 @@ function deterministicMeanScore(id: string): number {
   const score = 0.5 + normalized * 0.4;     // 0.5 -> 0.9
   return parseFloat(score.toFixed(3));
 }
-
-
   useEffect(() => {
   if (cyRef.current) {
     cyRef.current.layout({ name: layout }).run();
   }
 }, [layout, selectedDatasetId]);
 
-// --- Add this inside your Explorer component ---
+
 useEffect(() => {
   if (!cyRef.current) return;
 
   const cy = cyRef.current;
 
-  // Remove any previous listeners to avoid duplicates
   cy.removeListener('tap', 'node');
 
-  // Listen for node clicks
   cy.on('tap', 'node', (event) => {
-    const node = event.target.data(); // gets {id, label, importance, bestAlgo, bestMean, ...}
-    
-    // Optional: compute neighbors dynamically from filteredData
-    const neighbors = filteredData.edges
-      .filter(e => e.source === node.id || e.target === node.id)
-      .map(e => (e.source === node.id ? e.target : e.source));
+  const nodeId = event.target.id();
 
-    setSelectedNode({
-      ...node,
-      neighbors
-    });
+  // Get all edges in the filtered dataset
+  const edges = filteredData.edges;
 
-    console.log("Selected node:", node);
+  // Compute in-degree/out-degree
+  const inDegree = edges.filter(e => e.target === nodeId).length;
+  const outDegree = edges.filter(e => e.source === nodeId).length;
+  const totalDegree = inDegree + outDegree;
 
-    // Optional: build selectedNodeInfo for the panel
-    setSelectedNodeInfo({
-      id: node.id,
-      degree: neighbors.length,
-      bestAlgo: node.bestAlgo ?? deterministicAlgo(node.id),
-      bestMean: node.bestMean ?? deterministicMeanScore(node.id),
-      //  + topologyMeanScore(node),
-      neighbors
-    });
-  });
+  // Get neighbors
+  const neighbors = edges
+    .filter(e => e.source === nodeId || e.target === nodeId)
+    .map(e => (e.source === nodeId ? e.target : e.source));
 
-  // Cleanup on unmount
+
+const incomingNeighbors = edges
+  .filter(e => e.target === nodeId)
+  .map(e => e.source);
+
+const outgoingNeighbors = edges
+  .filter(e => e.source === nodeId)
+  .map(e => e.target);
+
+setSelectedNodeInfo({
+  id: nodeId,
+  degree: incomingNeighbors.length + outgoingNeighbors.length,
+  inDegree: incomingNeighbors.length,
+  outDegree: outgoingNeighbors.length,
+  bestAlgo: deterministicAlgo(nodeId),
+  bestMean: deterministicMeanScore(nodeId),
+  incomingNeighbors,
+  outgoingNeighbors
+});
+});
   return () => {
     cy.removeListener('tap', 'node');
   };
 }, [cyRef, filteredData]);
+
+const [tultip, setTultip] = useState(null);
+const [tooltip, setTooltip] = useState(null);
+
 
 
   return (
@@ -990,7 +1167,7 @@ useEffect(() => {
                 onValueChange={setScoreThreshold}
                 min={0}
                 max={1}
-                step={0.05}
+                step={0.01}
               />
             </div>
 
@@ -1058,6 +1235,13 @@ useEffect(() => {
                 <span className="text-gray-600">Edges</span>
                 <span className="text-foreground">{filteredEdges.length}</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Score Range</span>
+                <span className="text-foreground">
+                  [ {selectedDataset?.scoreRange?.edges[0]?.toFixed(2) ?? "0.00"} -{" "}
+                  {selectedDataset?.scoreRange?.edges[1]?.toFixed(2) ?? "1.00"} ]
+                </span>
+              </div>
             </div>
           </div>
         </Card>
@@ -1092,14 +1276,74 @@ useEffect(() => {
 
             <div className="border border-border rounded-lg overflow-hidden bg-white">
              
-              <CytoscapeComponent
+             <CytoscapeComponent
                 elements={cytoscapeElements}
                 style={{ width: "100%", height: "600px" }}
                 stylesheet={cytoscapeStylesheet}
-                cy={(cy) => (cyRef.current = cy)}
-                layout={{ name: layout }}
-              />
+                cy={(cy) => {
+                cyRef.current = cy;
 
+                cy.on("select", "node", function (evt) {
+                  const node = evt.target;
+                  const position = node.renderedPosition();
+
+                  setTultip({
+                    x: position.x,
+                    y: position.y,
+                    text:
+                      "Edge score = raw confidence value produced by the inference algorithm (not normalized).",
+                  });
+                });
+
+                cy.on("unselect", "node", function () {
+                  setTooltip(null);
+                });
+              }}
+  // cy={(cy) => {
+  //   cyRef.current = cy;
+
+  //   cy.on("select", "node", function (evt) {
+  //     const node = evt.target;
+
+  //     const ref = node.popperRef();
+  //     const dummyDomEle = document.createElement("div");
+
+  //     const tip = tippy(dummyDomEle, {
+  //       getReferenceClientRect: ref.getBoundingClientRect,
+  //       content: TOOLTIP_TEXT,
+  //       trigger: "manual",
+  //       placement: "top",
+  //       arrow: true,
+  //     });
+
+  //     tip.show();
+
+  //     node.on("unselect", () => {
+  //       tip.destroy();
+  //     });
+  //   });
+  // }}
+  layout={{ name: layout }}
+/>
+
+{tultip && (
+  <div
+    style={{
+      position: "absolute",
+      top: tultip.y,
+      left: tultip.x,
+      background: "#333",
+      color: "#fff",
+      padding: "8px",
+      borderRadius: "4px",
+      pointerEvents: "none",
+      transform: "translate(-50%, -100%)",
+      zIndex: 10,
+    }}
+  >
+    {tultip.text}
+  </div>
+)}
               
             </div>
           </Card>
@@ -1121,7 +1365,8 @@ useEffect(() => {
             {selectedNodeInfo && (
               <Card className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <p className="text-sm text-gray-300">Selected gene information</p>
+                  <p className="text-sm text-green-1000 font-medium">Selected gene information</p>
+                  <p className='text-gray-400 text-sm'><strong>N/B: </strong><em>“Edge score = raw confidence value produced by the inference algorithm (not normalized).”</em></p>
                   <div>
                   </div>
                   <Button
@@ -1140,8 +1385,18 @@ useEffect(() => {
                   </div>
 
                   <div className="p-4 bg-secondary rounded-lg">
-                    <p className="text-xs text-gray-600 mb-1">Degree</p>
+                    <p className="text-xs text-gray-600 mb-1">Total Degree</p>
                     <p className="text-foreground">{selectedNodeInfo.degree}</p>
+                  </div>
+
+                  <div className="p-4 bg-secondary rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">In-Degree</p>
+                    <p className="text-foreground">{selectedNodeInfo.inDegree}</p>
+                  </div>
+
+                  <div className="p-4 bg-secondary rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">Out-Degree</p>
+                    <p className="text-foreground">{selectedNodeInfo.outDegree}</p>
                   </div>
 
                   <div className="p-4 bg-secondary rounded-lg">
@@ -1159,19 +1414,43 @@ useEffect(() => {
                       {selectedNodeInfo.bestMean?.toFixed(3)}
                     </p>
                   </div>
-                </div>
 
-                <div className="mt-4 p-4 bg-secondary rounded-lg">
-                  <p className="text-xs text-gray-600 mb-2">
-                    Neighbors
-                  </p>
-                  <div className="flex flex-wrap gap-2 text-foreground">
-                    {selectedNodeInfo.neighbors?.slice(0, 5).map((neighbor, idx) => (
-                      <Badge key={idx} variant="secondary" className='text-foreground'>
-                        {neighbor}
-                      </Badge>
-                    ))}
+                  <div className="p-4 bg-secondary rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">
+                      Outgoing Neighbors
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-foreground">
+                      {selectedNodeInfo.outgoingNeighbors?.slice(0, 5).map((neighbor, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-foreground">
+                          {neighbor}
+                        </Badge>
+                      ))}
+                      {selectedNodeInfo.outgoingNeighbors && selectedNodeInfo.outgoingNeighbors.length > 5 && (
+                        <Badge variant="secondary" className="text-foreground">
+                          +{selectedNodeInfo.outgoingNeighbors.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
                   </div>
+
+                  <div className="p-4 bg-secondary rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">
+                      Incoming Neighbors
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-foreground">
+                      {selectedNodeInfo.incomingNeighbors?.slice(0, 5).map((neighbor, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-foreground">
+                          {neighbor}
+                        </Badge>
+                      ))}
+                      {selectedNodeInfo.incomingNeighbors && selectedNodeInfo.incomingNeighbors.length > 5 && (
+                        <Badge variant="secondary" className="text-foreground">
+                          +{selectedNodeInfo.incomingNeighbors.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
                 </div>
               </Card>
             )}

@@ -49,6 +49,7 @@
     "cytoscape-cose-bilkent": "^4.1.0",
     "cytoscape-fcose": "^2.2.0",
     "cytoscape-graphml": "^1.0.6",
+    "cytoscape-popper": "^4.0.1",
     "date-fns": "3.6.0",
     "embla-carousel-react": "8.6.0",
     "fast-xml-parser": "^5.3.5",
@@ -78,6 +79,7 @@
     "recharts": "2.15.2",
     "sonner": "2.0.3",
     "tailwind-merge": "3.2.0",
+    "tippy.js": "^6.3.7",
     "tw-animate-css": "1.3.8",
     "vaul": "1.1.2"
   },

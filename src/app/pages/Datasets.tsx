@@ -18,7 +18,7 @@ const allDatasets = [
   {
     id: 'GSD',
     name: 'GSD',
-    organism: 'N/A',
+    organism: 'Human',
     type: 'curated',
     genes: 18,
     cells: 120,
@@ -30,7 +30,7 @@ const allDatasets = [
   {
     id: 'HSC',
     name: 'HSC',
-    organism: 'N/A',
+    organism: 'Mouse',
     type: 'curated',
     genes: 11,
     cells: 110,
@@ -42,7 +42,7 @@ const allDatasets = [
   {
     id: 'mCAD',
     name: 'mCAD',
-    organism: 'N/A',
+    organism: 'Mouse',
     type: 'curated',
     genes: 5,
     cells: 100,
@@ -54,7 +54,7 @@ const allDatasets = [
   {
     id: 'VSC',
     name: 'VSC',
-    organism: 'N/A',
+    organism: 'Mouse',
     type: 'curated',
     genes: 8,
     cells: 115,
@@ -158,7 +158,7 @@ const allDatasets = [
   {
     id: 'dyn-LL',
     name: 'Dynamic LL',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 18,
     cells: 140,
@@ -170,7 +170,7 @@ const allDatasets = [
   {
     id: 'dyn-LI',
     name: 'Dynamic LI',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 7,
     cells: 115,
@@ -182,7 +182,7 @@ const allDatasets = [
   {
     id: 'dyn-TF',
     name: 'Dynamic TF',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 7,
     cells: 118,
@@ -194,7 +194,7 @@ const allDatasets = [
   {
     id: 'dyn-BF',
     name: 'Dynamic BF',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 5,
     cells: 105,
@@ -206,7 +206,7 @@ const allDatasets = [
   {
     id: 'dyn-BFC',
     name: 'Dynamic BFC',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 9,
     cells: 125,
@@ -218,7 +218,7 @@ const allDatasets = [
   {
     id: 'dyn-CY',
     name: 'Dynamic CY',
-    organism: 'N/A',
+    organism: 'Synthetic',
     type: 'synthetic',
     genes: 5,
     cells: 110,
@@ -229,289 +229,6 @@ const allDatasets = [
   },
 ];
 
-// const allDatasets = [
-//   {
-//     id: 'GSD',
-//     name: 'GSD',
-//     organism: 'Human',
-//     type: 'currated',
-//     genes: 1872,
-//     cells: 789,
-//     edges: 4728,
-//     source: 'real' as const,
-//     lastUpdated: '2024-11-15',
-//     sparklineData: [34, 45, 52, 48, 51, 73, 68, 32, 91, 78]
-//   },
-//   {
-//     id: 'HSC',
-//     name: 'HSC',
-//     organism: 'Mouse',
-//     type: 'curated',
-//     genes: 1726,
-//     cells: 895,
-//     edges: 2896,
-//     source: 'real' as const,
-//     lastUpdated: '2024-11-15',
-//     sparklineData: [31, 43, 51, 42, 51, 73, 68, 83, 91, 78]
-//   },  
-//   {
-//     id: 'mCAD',
-//     name: 'mCAD',
-//     organism: 'Mouse',
-//     type: 'curated',
-//     genes: 1872,
-//     cells: 758,
-//     edges: 3289,
-//     source: 'real' as const,
-//     lastUpdated: '2024-11-15',
-//     sparklineData: [34, 45, 52, 48, 61, 73, 68, 82, 43, 78]
-//   },
-//   {
-//     id: 'VSC',
-//     name: 'VSC',
-//     organism: 'Mouse',
-//     type: 'curated',
-//     genes: 1782,
-//     cells: 598,
-//     edges: 2989,
-//     source: 'real' as const,
-//     lastUpdated: '2024-11-15',
-//     sparklineData: [34, 45, 32, 48, 61, 73, 98, 82, 91, 78]
-//   },
-//   {
-//     id: 'hESC',
-//     name: 'hESC',
-//     organism: 'Human',
-//     type: 'scRNA-seq',
-//     genes: 1872,
-//     cells: 758,
-//     edges: 3289,
-//     source: 'real' as const,
-//     lastUpdated: '2024-11-15',
-//     sparklineData: [34, 45, 52, 48, 61, 73, 68, 82, 91, 78]
-//   },
-//   {
-//     id: 'mDC',
-//     name: 'mDC',
-//     organism: 'Mouse',
-//     type: 'scRNA-seq',
-//     genes: 1547,
-//     cells: 383,
-//     edges: 2456,
-//     source: 'real' as const,
-//     lastUpdated: '2024-10-28',
-//     sparklineData: [28, 31, 39, 42, 38, 51, 58, 64, 59, 71]
-//   },
-//   // {
-//   //   id: 'mESC',
-//   //   name: 'mESC',
-//   //   organism: 'Mouse',
-//   //   type: 'scRNA-seq',
-//   //   genes: 1654,
-//   //   cells: 421,
-//   //   edges: 2891,
-//   //   source: 'curated' as const,
-//   //   lastUpdated: '2024-11-08',
-//   //   sparklineData: [22, 35, 41, 48, 44, 59, 62, 71, 68, 75]
-//   // },
-//   {
-//     id: 'hHep',
-//     name: 'hHep',
-//     organism: 'Human',
-//     type: 'scRNA-seq',
-//     genes: 1985,
-//     cells: 642,
-//     edges: 3567,
-//     source: 'real' as const,
-//     lastUpdated: '2024-09-22',
-//     sparklineData: [31, 38, 42, 49, 55, 62, 58, 69, 77, 82]
-//   },
-//   {
-//     id: 'mESC',
-//     name: 'mESC',
-//     organism: 'Mouse',
-//     type: 'scRNA-seq',
-//     genes: 1362,
-//     cells: 536,
-//     edges: 2384,
-//     source: 'curated' as const,
-//     lastUpdated: '2024-10-12',
-//     sparklineData: [19, 38, 24, 41, 48, 72, 59, 65, 71, 68]
-//   },
-//   {
-//   id: 'mHSC-E',
-//   name: 'mHSC-E',
-//   organism: 'Mouse',
-//   type: 'scRNA-seq',
-//   genes: 4762,                     // from GeneOrdering.csv
-//   cells: 645,                      // from PseudoTime.csv
-//   edges: 2857,                      // ~0.6 * genes
-//   source: 'curated' as const,
-//   lastUpdated: '2024-11-01',
-//   sparklineData: [22, 30, 38, 45, 53, 60, 68, 74, 80, 86]
-// },
-//   {
-//     id: 'mHSC-GM',
-//     name: 'mHSC-GM',
-//     organism: 'Mouse',
-//     type: 'scRNA-seq',
-//     genes: 18895,
-//     cells: 635,
-//     edges: 3062,
-//     source: 'curated' as const,
-//     lastUpdated: '2024-11-01',
-//     sparklineData: [24, 39, 43, 46, 53, 61, 68, 74, 78, 85]
-//   },
-//   {
-//     id: 'mHSC-L',
-//     name: 'mHSC-L',
-//     organism: 'Mouse',
-//     type: 'scRNA-seq',
-//     genes: 1823,
-//     cells: 712,
-//     edges: 3178,
-//     source: 'curated' as const,
-//     lastUpdated: '2024-10-29',
-//     sparklineData: [28, 36, 43, 49, 56, 64, 71, 77, 82, 88]
-//   },
-//   // {
-//   //   id: 'yeast-1',
-//   //   name: 'Yeast Network 1',
-//   //   organism: 'Yeast',
-//   //   type: 'Bulk RNA-seq',
-//   //   genes: 987,
-//   //   cells: 234,
-//   //   edges: 1456,
-//   //   source: 'real' as const,
-//   //   lastUpdated: '2024-07-10',
-//   //   sparklineData: [18, 24, 31, 37, 44, 51, 57, 63, 68, 72]
-//   // },
-//   // {
-//   //   id: 'yeast-2',
-//   //   name: 'Yeast Network 2',
-//   //   organism: 'Yeast',
-//   //   type: 'Bulk RNA-seq',
-//   //   genes: 1123,
-//   //   cells: 298,
-//   //   edges: 1789,
-//   //   source: 'real' as const,
-//   //   lastUpdated: '2024-07-22',
-//   //   sparklineData: [21, 27, 34, 40, 47, 54, 60, 66, 71, 75]
-//   // },
-//   // {
-//   //   id: 'Synthetic-1',
-//   //   name: 'Synthetic-1',
-//   //   organism: 'Synthetic',
-//   //   type: 'scRNA-seq',
-//   //   genes: 1500,
-//   //   cells: 500,
-//   //   edges: 2500,
-//   //   source: 'synthetic' as const,
-//   //   lastUpdated: '2024-08-15',
-//   //   sparklineData: [30, 35, 40, 45, 50, 55, 60, 65, 70, 75]
-//   // },
-//   // {
-//   //   id: 'Synthetic-2',
-//   //   name: 'Synthetic-2',
-//   //   organism: 'Synthetic',
-//   //   type: 'scRNA-seq',
-//   //   genes: 2000,
-//   //   cells: 750,
-//   //   edges: 3500,
-//   //   source: 'synthetic' as const,
-//   //   lastUpdated: '2024-08-20',
-//   //   sparklineData: [35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
-//   // }  
-//   {
-//     id: 'dyn-LL',
-//     name: 'Dynamic LL',
-//     organism: 'Mouse',
-//     type: 'synthetic',
-//     genes: 1234,
-//     cells: 456,
-//     edges: 1456,
-//     source: 'synthetic' as const,
-//     lastUpdated: '2024-07-10',
-//     sparklineData: [18, 42, 31, 37, 44, 61, 57, 63, 68, 82]
-//   },
-//   {
-//     id: 'dyn-LI',
-//     name: 'Dynamic LI',
-//     organism: 'Mouse',
-//     type: 'synthetic',
-//     genes: 1123,
-//     cells: 298,
-//     edges: 1789,
-//     source: 'synthetic' as const,
-//     lastUpdated: '2024-07-22',
-//     sparklineData: [21, 27, 34, 40, 47, 54, 60, 66, 71, 75]
-//   },
-//   {
-//     id: 'dyn-TF',
-//     name: 'Dynamic TF',
-//     organism: 'Mouse',
-//     type: 'synthetic',
-//     genes: 1302,
-//     cells: 319,
-//     edges: 1859,
-//     source: 'synthetic' as const,
-//     lastUpdated: '2024-07-22',
-//     sparklineData: [21, 27, 34, 40, 37, 54, 60, 56, 71, 75]
-//   },
-//   {
-//     id: 'dyn-BF',
-//     name: 'Dynamic BF',
-//     organism: 'Mouse',
-//     type: 'synthetic',
-//     genes: 1500,
-//     cells: 500,
-//     edges: 2500,
-//     source: 'synthetic' as const,
-//     lastUpdated: '2024-08-15',
-//     sparklineData: [20, 35, 40, 45, 50, 55, 40, 65, 70, 85]
-//   },
-//   {
-//     id: 'dyn-BFC',
-//     name: 'Dynamic BFC',
-//     organism: 'Mouse',
-//     type: 'synthetic',
-//     genes: 2000,
-//     cells: 750,
-//     edges: 3500,
-//     source: 'synthetic' as const,
-//     lastUpdated: '2024-08-20',
-//     sparklineData: [35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
-//   },
-//   {
-//     id: 'dyn-CY',
-//     name: 'Dynamic CY',
-//     organism: 'Mouse',
-//     type: 'synthetic',
-//     genes: 2145,
-//     cells: 645,
-//     edges: 3012,
-//     source: 'synthetic' as const,
-//     lastUpdated: '2024-11-01',
-//     sparklineData: [22, 40, 38, 45, 53, 60, 78, 74, 80, 76]
-
-//   },
-// ];
-
-// const [datasets, setDatasets] = useState<any[]>([]);
-// const [loading, setLoading] = useState(true);
-
-// useEffect(() => {
-//   fetch("/api/datasets")
-//     .then(res => res.json())
-//     .then(data => {
-//       setDatasets(data);
-//       setLoading(false);
-//     });
-// }, []);
-
-// if (loading) {
-//   return <DatasetSkeleton />;
-// }
 
 
 
