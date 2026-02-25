@@ -800,14 +800,11 @@ function deterministicAlgo(id: string): string {
   return BEELINE_ALGORITHMS[index];
 }
 
-function deterministicEdgeScores(source: string, target: string) {
-  const scores: Record<string, number> = {};
-  BEELINE_ALGORITHMS.forEach(algo => {
-    const hash = simpleHash(source + target + algo);
-    const normalized = (hash % 1000) / 1000; // 0–0.999
-    scores[algo] = parseFloat((0.5 + normalized * 0.45).toFixed(3)); // score 0.5–0.95
-  });
-  return scores;
+function deterministicMeanScore(id: string): number {
+  const hash = simpleHash(id);
+  const normalized = (hash % 1000) / 1000;
+  const score = 0.5 + normalized * 0.4; 
+  return parseFloat(score.toFixed(3));
 }
   useEffect(() => {
   if (cyRef.current) {
@@ -821,38 +818,51 @@ useEffect(() => {
   const cy = cyRef.current;
 
   cy.removeListener("tap", "node");
+
   cy.on("tap", "node", (event) => {
     const nodeId = event.target.id();
 
-    // Outgoing edges from this node
-    const outgoingEdges = filteredEdges.filter(e => e.source === nodeId);
+    const edges = filteredEdges;
 
+    const incomingNeighbors = edges
+      .filter(e => e.target === nodeId)
+      .map(e => e.source);
+
+    // const outgoingNeighbors = edges
+    //   .filter(e => e.source === nodeId)
+    //   .map(e => e.target);
+    const outgoingEdges = enrichedEdges.filter(e => e.source === nodeId);
     const outgoingNeighbors = outgoingEdges.map(e => e.target);
-    const incomingEdges = filteredEdges.filter(e => e.target === nodeId);
-    const incomingNeighbors = incomingEdges.map(e => e.source);
+    const inDegree = incomingNeighbors.length;
+    const outDegree = outgoingNeighbors.length;
+    const totalDegree = inDegree + outDegree;
 
-    // Populate scores for each edge
-    outgoingEdges.forEach(e => {
-      e.scores = deterministicEdgeScores(e.source, e.target);
-    });
+    const { bestAlgo, bestMean } = getNodeBestAlgorithm(nodeId);
 
-    setSelectedNodeInfo({
-      id: nodeId,
-      degree: (globalInDegreeMap[nodeId] || 0) + (globalOutDegreeMap[nodeId] || 0),
-      inDegree: globalInDegreeMap[nodeId] || 0,
-      outDegree: globalOutDegreeMap[nodeId] || 0,
-      outgoingNeighbors,
-      incomingNeighbors,
-      outgoingEdges // store edge data for convenience
-    });
+    
 
-    setSelectedEdge(null); // optional, clear any previously selected edge
+
+setSelectedNodeInfo({
+  id: nodeId,
+  degree: (globalInDegreeMap[nodeId] || 0) + (globalOutDegreeMap[nodeId] || 0),
+  inDegree: globalInDegreeMap[nodeId] || 0,
+  outDegree: globalOutDegreeMap[nodeId] || 0,
+  outgoingNeighbors,
+  incomingNeighbors: enrichedEdges
+    .filter(e => e.target === nodeId)
+    .map(e => e.source),
+  edges: outgoingEdges
+});
+
+    setSelectedEdge(null);
   });
 
   return () => {
     cy.removeListener("tap", "node");
   };
-}, [filteredEdges, globalInDegreeMap, globalOutDegreeMap]);
+
+}, [filteredEdges, inferenceData]);
+
 
   return (
     <div id="explorer" className="min-h-screen py-20 pb-0">
@@ -1370,26 +1380,32 @@ useEffect(() => {
                   </div>
 
                   <div className="p-4 bg-secondary rounded-lg col-span-2">
-  <p className="text-xs text-gray-600 mb-2">Outgoing Edges & Supporting Algorithms</p>
-  {selectedNodeInfo.outgoingEdges && selectedNodeInfo.outgoingEdges.length > 0 ? (
-    <div className="space-y-2">
-      {selectedNodeInfo.outgoingEdges.map((edge, idx) => (
-        <div key={idx} className="text-foreground text-sm bg-secondary p-2 rounded">
-          <span className="font-medium">Edge: {edge.source} → {edge.target}</span>
-          <div className="ml-2 mt-1 flex flex-wrap gap-1">
-            {Object.entries(edge.scores ?? {}).map(([algo, score]) => (
-              <Badge key={algo} variant="secondary" className="text-foreground">
-                {algo}: {score.toFixed(3)}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-xs text-gray-500">No outgoing edges</p>
-  )}
-</div>
+                    <p className="text-xs text-gray-600 mb-2">Outgoing Edges & Supporting Algorithms</p>
+                    {selectedNodeInfo.outgoingNeighbors && selectedNodeInfo.outgoingNeighbors.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedNodeInfo.outgoingNeighbors.map((targetId, idx) => {
+                          // Find the edge that goes from this node to targetId
+                          const edge = filteredEdges.find(e => e.source === selectedNodeInfo.id && e.target === targetId);
+                          if (!edge) return null;
+
+                          return (
+                            <div key={idx} className="text-foreground text-sm bg-secondary p-2 rounded">
+                              <span className="font-medium">Edge: {selectedNodeInfo.id} → {targetId}</span>
+                              <div className="ml-2 mt-1 flex flex-wrap gap-1">
+                                {Object.entries(edge.scores ?? {}).map(([algo, score]) => (
+                                  <Badge key={algo} variant="secondary" className="text-foreground">
+                                    {algo}: {score.toFixed(3)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500">No outgoing edges</p>
+                    )}
+                  </div>
 
                   {/* <div className="p-4 bg-secondary rounded-lg col-span-2">
                     <p className="text-xs text-gray-600 mb-2">Incoming Neighbors</p>

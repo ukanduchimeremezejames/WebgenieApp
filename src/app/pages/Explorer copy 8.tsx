@@ -127,6 +127,7 @@ const datasetsArray = [
 ];
 
 console.log("Datasets loaded:", datasetsArray);
+// console.log(datasetsArray.map(d => ({ id: d.id, nodes: d.nodes.length, edges: d.edges.length })));
 
 export function Explorer() {
   
@@ -139,15 +140,7 @@ export function Explorer() {
   minConsensus: [1]
 };
 
-interface SelectedEdge {
-  id: string;
-  source: string;
-  target: string;
-  scores: Record<string, number>;
-}
-
-const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
-
+ 
 interface NodeInfo {
   id: string;
   degree: number;
@@ -164,6 +157,10 @@ const [activeAlgorithm, setActiveAlgorithm] = useState<string>("GENIE3");
 const [selectedNodeInfo, setSelectedNodeInfo] = useState<NodeInfo | null>(null);
 
 const [selectedDatasetId, setSelectedDatasetId] = useState("dyn-bf");
+
+// const selectedDataset = useMemo(() => {
+//   return datasetsArray.find(d => d.id === selectedDatasetId);
+// }, [selectedDatasetId]);
 
 // --- Inside Explorer.tsx ---
 const selectedDataset = useMemo(() => {
@@ -214,6 +211,17 @@ const selectedDataset = useMemo(() => {
           bestAlgo = algo;
         }
       });
+
+      // return { ...edge, bestAlgo, bestMean: parseFloat(bestMean.toFixed(4)) };
+
+      // const ALGORITHMS = [
+      //   "GENIE3",
+      //   "GRNBoost2",
+      //   "PIDC",
+      //   "CLR",
+      //   "MRNET",
+      //   "SCENIC"
+      // ];
 
       const nScores: Record<string, number> = {};
 
@@ -392,7 +400,37 @@ const [minConsensus, setMinConsensus] = useState(DEFAULT_FILTERS.minConsensus);
 
   const [layout, setLayout] = useState('cose');
   const [selectedNode, setSelectedNode] = useState<BeelineNode | null>(null);
+  // const [selectedNode, setSelectedNode] = useState<any>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
+
+// const filteredEdges = useMemo(() => {
+//   if (!selectedDataset) return [];
+
+//   let edges = [...selectedDataset.edges]; 
+
+//   // Edge type
+//   if (edgeFilter !== "all") {
+//     edges = edges.filter(e => e.type === edgeFilter);
+//   }
+
+//   // Score threshold
+//   edges = edges.filter(e =>
+//     Math.max(0.5, ...Object.values(e.scores ?? {})) >= scoreThreshold[0]
+//   );
+
+//   // Sort by score
+//   edges.sort(
+//     (a, b) =>
+//       Math.max(0, ...Object.values(b.scores ?? {})) -
+//       Math.max(0, ...Object.values(a.scores ?? {}))
+//   );
+
+//   // TopK
+//   edges = edges.slice(0, topK[0]);
+
+//   return edges;
+
+// }, [selectedDataset, edgeFilter, scoreThreshold, topK]);
 
 const filteredEdges = useMemo(() => {
   if (!selectedDataset) return [];
@@ -473,29 +511,17 @@ const cytoscapeElements = useMemo(() => {
   if (!selectedDataset) return [];
 
   const nodes = filteredNodes.map((node) => ({
-  data: {
-    id: node.id,
-    label: node.label,
-    importance: node.importance ?? 1,   
-    degree: node.degree,
-    inDegree: node.inDegree,
-    outDegree: node.outDegree
-  }
-}));
-
-  // const nodes = filteredNodes.map((node) => ({
-  //   data: {
-  //     id: node.id,
-  //     label: node.label,
-  //     importance: node.importance ?? 1,
-  //     degree: node.degree,
-  //     inDegree: node.inDegree,
-  //     outDegree: node.outDegree,
-  //     bestAlgo: node.bestAlgo,
-  //     bestMean: node.bestMean,
-  //     neighbors: node.neighbors
-  //   }
-  // }));
+    data: {
+      id: node.id,
+      label: node.label,
+      degree: node.degree,
+      inDegree: node.inDegree,
+      outDegree: node.outDegree,
+      bestAlgo: node.bestAlgo,
+      bestMean: node.bestMean,
+      neighbors: node.neighbors
+    }
+  }));
 
   const edges = filteredEdges.map((edge) => ({
     data: {
@@ -559,70 +585,97 @@ const globalDegreeMap = useMemo(() => {
     }
   }));
 
-// Global out-degree map
-const globalOutDegreeMap = useMemo(() => {
-  return filteredEdges.reduce<Record<string, number>>((acc, edge) => {
-    acc[edge.source] = (acc[edge.source] || 0) + 1;
-    return acc;
-  }, {});
-}, [filteredEdges]);
 
-// Global in-degree map
-const globalInDegreeMap = useMemo(() => {
-  return filteredEdges.reduce<Record<string, number>>((acc, edge) => {
-    acc[edge.target] = (acc[edge.target] || 0) + 1;
-    return acc;
-  }, {});
-}, [filteredEdges]);
-
-const cytoscapeStylesheet: cytoscape.StylesheetStyle[] = [
+  const cytoscapeStylesheet = [
   {
-    selector: 'node',
-    style: {
-      'background-color': '#5B2C6F',
-      'label': 'data(label)',
-      // 'width': 40,
-      // 'height': 40,
-      'width': 'mapData(importance, 1, 5, 25, 45)',
-      'height': 'mapData(importance, 1, 5, 25, 45)',
-      'text-valign': 'center',
-      'text-halign': 'center',
-      'font-size': '9px',
-      'color': '#ffffff'
-    }
-  },
-  {
-    selector: 'node:selected',
-    style: {
-      'background-color': '#28A745',
-      'border-width': 2,
-      'border-color': '#1E1E1E'
-    }
-  },
-  {
-    selector: 'edge',
-    style: {
-      'width': 2,
-      'curve-style': 'bezier',
-      'target-arrow-shape': 'triangle'
-    }
-  },
-  {
-    selector: 'edge[type="activation"]',
-    style: {
-      'line-color': '#22c55e',
-      'target-arrow-color': '#22c55e'
-    }
-  },
-  {
-    selector: 'edge[type="repression"]',
-    style: {
-      'line-color': '#ef4444',
-      'target-arrow-color': '#ef4444',
-      'target-arrow-shape': 'tee'
-    }
+  selector: 'edge[type="activation"]',
+  style: {
+    'line-color': '#22c55e',   // green
+    'target-arrow-color': '#22c55e',
+    'target-arrow-shape': 'triangle'
   }
-];
+},
+{
+  selector: 'edge[type="repression"]',
+  style: {
+    'line-color': '#ef4444',   // red
+    'target-arrow-color': '#ef4444',
+    'target-arrow-shape': 'tee'
+  }
+},
+
+{
+  selector: 'node[bestAlgo = "algo1"]',
+  style: {
+    'background-color': '#1f77b4'
+  }
+},
+{
+  selector: 'node[bestAlgo = "algo2"]',
+  style: {
+    'background-color': '#ff7f0e'
+  }
+},
+{
+  selector: 'node[bestAlgo = "algo3"]',
+  style: {
+    'background-color': '#2ca02c'
+  }
+},
+{
+  selector: 'node[!bestAlgo]',
+  style: {
+    'background-color': '#cccccc'
+  }
+},
+{
+      selector: 'node',
+      style: {
+        'background-color': '#5B2C6F',
+        'label': 'data(label)',
+        'width': 'mapData(importance, 1, 6, 30, 80)',
+        'height': 'mapData(importance, 1, 6, 30, 80)',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'font-size': '9px',
+        'color': '#ffffff'
+      }
+    },
+
+    {
+  selector: 'edge',
+  style: {
+    'width': 2,
+    'line-color': 'green',
+    'target-arrow-color': 'green',
+    'target-arrow-shape': 'triangle',
+    'curve-style': 'bezier'
+  }
+},
+
+    {
+      selector: 'edge[type="activation"]',
+      style: {
+        'line-color': '#28A745',
+        'target-arrow-color': '#28A745'
+      }
+    },
+    {
+      selector: 'edge[type="repression"]',
+      style: {
+        'line-color': '#EF4444',
+        'target-arrow-color': '#EF4444'
+      }
+    },
+    {
+      selector: 'node:selected',
+      style: {
+        'background-color': '#28A745',
+        'border-width': '2px',
+        'border-color': '#1E1E1E'
+      }
+    }
+  ] as cytoscape.StylesheetStyle[];
 
   const handleZoomIn = () => {
     if (cyRef.current) {
@@ -671,69 +724,114 @@ const handleExportJSON = () => {
   const cy = cyRef.current;
 
   const elements = {
-    nodes: cy.nodes().map(n => ({
-      data: {
-        id: n.id(),
-        label: n.data().label
-      }
-    })),
-    edges: cy.edges().map(e => {
-      const source = e.source().id();
-      const target = e.target().id();
-
-      const matchedEdge = filteredEdges.find(
-        ed => ed.source === source && ed.target === target
-      );
+    nodes: cy.nodes().map((n) => {
+      const id = n.id();
+      const data = n.data();
 
       return {
         data: {
-          id: `${source}-${target}`,
-          source,
-          target,
-          scores: matchedEdge?.scores ?? {}
-        }
+          ...data,
+          id,
+          bestAlgo: deterministicAlgo(id),
+          bestMean: deterministicMeanScore(id),
+        },
       };
-    })
+    }),
+
+ 
+
+    edges: cy.edges().map((e) => {
+  const source = e.source().id();
+  const target = e.target().id();
+  const data = e.data();
+
+  const edgeId = `${source}->${target}`;
+  const deterministicScore = deterministicMeanScore(edgeId);
+
+  return {
+    data: {
+      ...data,
+      source,
+      target,
+      bestAlgo: deterministicAlgo(edgeId),
+      bestMean: deterministicScore,
+      score: deterministicScore   
+    },
+  };
+}),
+
   };
 
-  const blob = new Blob(
-    [JSON.stringify({ elements }, null, 2)],
-    { type: "application/json" }
-  );
+  const jsonExport = {
+    metadata: {
+      exportedAt: new Date().toISOString(),
+      version: "1.0",
+      deterministicInference: true,
+    },
+    elements,
+  };
+
+  const blob = new Blob([JSON.stringify(jsonExport, null, 2)], {
+    type: "application/json",
+  });
 
   saveAs(blob, "network.json");
 };
 
 const handleExportCSV = () => {
-  if (!cyRef.current) return;
+  if (cyRef.current) {
+    const nodes = cyRef.current.nodes().map((n) => {
+      const id = n.id();
+      const data = n.data();
+      return {
+        id,
+        label: data.label || '',
+        ...data,
+        bestAlgo: deterministicAlgo(id),
+        bestMean: deterministicMeanScore(id),
+      };
+    });
 
-  const edges = filteredEdges.map(edge => ({
-    source: edge.source,
-    target: edge.target,
-    ...edge.scores
-  }));
+    const edges = cyRef.current.edges().map((e) => {
+      const source = e.source().id();
+      const target = e.target().id();
+      const data = e.data();
 
-  if (!edges.length) return;
+      // Use a combination of source+target for deterministic hashing
+      const edgeId = `${source}->${target}`;
 
-  const headers = Object.keys(edges[0]);
-  const rows = edges.map(row =>
-    headers.map(h => JSON.stringify(row[h] ?? '')).join(',')
-  );
+      return {
+        source,
+        target,
+        ...data,
+        bestAlgo: deterministicAlgo(edgeId),
+        bestMean: deterministicMeanScore(edgeId),
+      };
+    });
 
-  const csvContent = [headers.join(','), ...rows].join('\n');
+    // Convert array to CSV
+    const arrayToCSV = (arr: Record<string, any>[]) => {
+      if (!arr.length) return '';
+      const headers = Object.keys(arr[0]);
+      const rows = arr.map((row) =>
+        headers.map((h) => JSON.stringify(row[h] ?? '')).join(',')
+      );
+      return [headers.join(','), ...rows].join('\n');
+    };
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-
-  const link = document.createElement('a');
-  link.download = 'network.csv';
-  link.href = URL.createObjectURL(blob);
-  link.click();
+    const csvContent = `# Nodes\n${arrayToCSV(nodes)}\n\n# Edges\n${arrayToCSV(edges)}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.download = 'network.csv';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+  }
 };
 
 // Export GraphML
 const handleExportGraphML = () => {
   if (cyRef.current) {
-    const graphml = cyRef.current.graphml(); 
+    const graphml = cyRef.current.graphml(); // Requires cytoscape-graphml extension
     const blob = new Blob([graphml], { type: 'application/xml;charset=utf-8' });
     const link = document.createElement('a');
     link.download = 'network.graphml';
@@ -748,12 +846,11 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
   const [showModules, setShowModules] = useState(true);
   const [edgeType, setEdgeType] = useState<'all' | 'activation' | 'inhibition'>('all');
   const [selectedGene, setSelectedGene] = useState('');
-  // const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
-  // const [selectedEdge, setSelectedEdge] = useState<any>(null);
+  const [selectedEdge, setSelectedEdge] = useState<any>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(true);
 
   
-const BEELINE_ALGORITHMS = [
+  const BEELINE_ALGORITHMS = [
   "GENIE3",
   "GRNBoost2",
   "Pearson",
@@ -768,7 +865,6 @@ const BEELINE_ALGORITHMS = [
   "Arboreto"
 ];
 
-
 function simpleHash(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -777,37 +873,17 @@ function simpleHash(str: string): number {
   return hash;
 }
 
-
-function generateEdgeScores(edgeId: string, datasetId: string) {
-  const base = simpleHash(edgeId + datasetId) % 1000;
-  const scores: Record<string, number> = {};
-  BEELINE_ALGORITHMS.forEach((algo, idx) => {
-    const variation = (simpleHash(edgeId + algo) % 100) / 1000; 
-    scores[algo] = parseFloat((0.3 + (base / 1000) * 0.6 + variation).toFixed(3));
-    if (scores[algo] > 0.9) scores[algo] = 0.9; 
-  });
-  return scores;
-}
-
-const enrichedEdges = selectedDataset.edges.map((e) => ({
-  ...e,
-  scores: generateEdgeScores(`${e.source}-${e.target}`, selectedDataset.id)
-}));
-
 function deterministicAlgo(id: string): string {
   const hash = simpleHash(id);
   const index = hash % BEELINE_ALGORITHMS.length;
   return BEELINE_ALGORITHMS[index];
 }
 
-function deterministicEdgeScores(source: string, target: string) {
-  const scores: Record<string, number> = {};
-  BEELINE_ALGORITHMS.forEach(algo => {
-    const hash = simpleHash(source + target + algo);
-    const normalized = (hash % 1000) / 1000; // 0–0.999
-    scores[algo] = parseFloat((0.5 + normalized * 0.45).toFixed(3)); // score 0.5–0.95
-  });
-  return scores;
+function deterministicMeanScore(id: string): number {
+  const hash = simpleHash(id);
+  const normalized = (hash % 1000) / 1000; // 0 -> .999
+  const score = 0.5 + normalized * 0.4;     // 0.5 -> 0.9
+  return parseFloat(score.toFixed(3));
 }
   useEffect(() => {
   if (cyRef.current) {
@@ -820,39 +896,149 @@ useEffect(() => {
 
   const cy = cyRef.current;
 
-  cy.removeListener("tap", "node");
-  cy.on("tap", "node", (event) => {
+  cy.removeListener('tap', 'node');
+
+  cy.on('tap', 'node', (event) => {
     const nodeId = event.target.id();
 
-    // Outgoing edges from this node
-    const outgoingEdges = filteredEdges.filter(e => e.source === nodeId);
+    // Always compute from visible edges (filters applied)
+    const edges = filteredEdges;
 
-    const outgoingNeighbors = outgoingEdges.map(e => e.target);
-    const incomingEdges = filteredEdges.filter(e => e.target === nodeId);
-    const incomingNeighbors = incomingEdges.map(e => e.source);
+    const incomingNeighbors = edges
+      .filter(e => e.target === nodeId)
+      .map(e => e.source);
 
-    // Populate scores for each edge
-    outgoingEdges.forEach(e => {
-      e.scores = deterministicEdgeScores(e.source, e.target);
-    });
+    const outgoingNeighbors = edges
+      .filter(e => e.source === nodeId)
+      .map(e => e.target);
+
+    const inDegree = incomingNeighbors.length;
+    const outDegree = outgoingNeighbors.length;
+    const totalDegree = inDegree + outDegree;
 
     setSelectedNodeInfo({
       id: nodeId,
-      degree: (globalInDegreeMap[nodeId] || 0) + (globalOutDegreeMap[nodeId] || 0),
-      inDegree: globalInDegreeMap[nodeId] || 0,
-      outDegree: globalOutDegreeMap[nodeId] || 0,
-      outgoingNeighbors,
+      degree: totalDegree,
+      inDegree,
+      outDegree,
       incomingNeighbors,
-      outgoingEdges // store edge data for convenience
+      outgoingNeighbors
     });
 
-    setSelectedEdge(null); // optional, clear any previously selected edge
+    // Optional: clear selected edge if a node is clicked
+    setSelectedEdge(null);
   });
 
   return () => {
-    cy.removeListener("tap", "node");
+    cy.removeListener('tap', 'node');
   };
-}, [filteredEdges, globalInDegreeMap, globalOutDegreeMap]);
+
+}, [cyRef, filteredEdges]);
+
+// useEffect(() => {
+//   if (!cyRef.current) return;
+
+//   const cy = cyRef.current;
+
+//   cy.removeListener('tap', 'node');
+
+// cy.on('tap', 'edge', (event) => {
+//   const edge = event.target.data();
+
+//   setSelectedEdge({
+//     source: edge.source,
+//     target: edge.target,
+//     scores: edge.scores || {}
+//   });
+// });
+
+//   // cy.on('tap', 'node', (event) => {
+//   //   const nodeId = event.target.id();
+
+//   //   const edges = filteredEdges;
+
+//   //   const incomingNeighbors = edges
+//   //     .filter(e => e.target === nodeId)
+//   //     .map(e => e.source);
+
+//   //   const outgoingNeighbors = edges
+//   //     .filter(e => e.source === nodeId)
+//   //     .map(e => e.target);
+
+//   //   const inDegree = incomingNeighbors.length;
+//   //   const outDegree = outgoingNeighbors.length;
+//   //   const totalDegree = inDegree + outDegree;
+
+//   //   setSelectedNodeInfo({
+//   //     id: nodeId,
+//   //     degree: totalDegree,
+//   //     inDegree,
+//   //     outDegree,
+//   //     bestAlgo: deterministicAlgo(nodeId),
+//   //     bestMean: deterministicMeanScore(nodeId),
+//   //     incomingNeighbors,
+//   //     outgoingNeighbors
+//   //   });
+//   // });
+
+//   return () => {
+//     cy.removeListener('tap', 'node');
+//   };
+
+// }, [cyRef, filteredEdges]); 
+
+// useEffect(() => {
+//   if (!cyRef.current) return;
+
+//   const cy = cyRef.current;
+
+//   cy.removeListener('tap', 'node');
+
+//   cy.on('tap', 'node', (event) => {
+//   const nodeId = event.target.id();
+
+//   // Get all edges in the filtered dataset
+//   const edges = filteredData.edges;
+
+//   // Compute in-degree/out-degree
+//   const inDegree = edges.filter(e => e.target === nodeId).length;
+//   const outDegree = edges.filter(e => e.source === nodeId).length;
+//   const totalDegree = inDegree + outDegree;
+
+//   // Get neighbors
+//   const neighbors = edges
+//     .filter(e => e.source === nodeId || e.target === nodeId)
+//     .map(e => (e.source === nodeId ? e.target : e.source));
+
+
+// const incomingNeighbors = edges
+//   .filter(e => e.target === nodeId)
+//   .map(e => e.source);
+
+// const outgoingNeighbors = edges
+//   .filter(e => e.source === nodeId)
+//   .map(e => e.target);
+
+// setSelectedNodeInfo({
+//   id: nodeId,
+//   degree: incomingNeighbors.length + outgoingNeighbors.length,
+//   inDegree: incomingNeighbors.length,
+//   outDegree: outgoingNeighbors.length,
+//   bestAlgo: deterministicAlgo(nodeId),
+//   bestMean: deterministicMeanScore(nodeId),
+//   incomingNeighbors,
+//   outgoingNeighbors
+// });
+// });
+//   return () => {
+//     cy.removeListener('tap', 'node');
+//   };
+// }, [cyRef, filteredData]);
+
+// const [tultip, setTultip] = useState(null);
+const [tooltip, setTooltip] = useState(null);
+
+
 
   return (
     <div id="explorer" className="min-h-screen py-20 pb-0">
@@ -1288,16 +1474,19 @@ useEffect(() => {
             
             <div className="p-4 rounded-lg border bg-card sticky top-24">
               <h3 className="font-semibold mb-4">Gene Details</h3>
-              {!selectedNodeInfo && (
-                <div className="text-sm text-gray-600 text-center py-8">
-                  Click a gene node to view details
-                </div>
-              )}
+              <div className="text-sm text-gray-600 text-center py-8">
+                Click a gene node to view details
+              </div>
 
-              {selectedNodeInfo && (
+              
+
+            {selectedNodeInfo && (
               <Card className="p-6">
                 <div className="flex items-start justify-between mb-0">
-                  <p className="text-sm text-green-1000 font-medium">Selected gene information</p>
+                  <p className="text-sm text-green-1000 display-block font-medium">Selected gene information</p> <br />
+                  
+                  <div>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1306,13 +1495,9 @@ useEffect(() => {
                     ×
                   </Button>
                 </div>
-
-                <p className='text-gray-400 text-sm mt-2'>
-                  <strong>N/B: </strong>
-                  <em>“Edge score = raw confidence value produced by the inference algorithm (not normalized).”</em>
-                </p>
-
-                <div className="grid grid-cols-2 gap-4 mt-4">
+              <p className='text-gray-400 text-sm display-block'><strong>N/B: </strong><em>“Edge score = raw confidence value produced by the inference algorithm (not normalized).”</em></p>
+                <div className="grid grid-cols-2 gap-4">
+                  
                   <div className="p-4 bg-secondary rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Gene ID</p>
                     <p className="text-foreground">{selectedNodeInfo.id}</p>
@@ -1331,6 +1516,22 @@ useEffect(() => {
                   <div className="p-4 bg-secondary rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Out-Degree</p>
                     <p className="text-foreground">{selectedNodeInfo.outDegree}</p>
+                  </div>
+
+                  <div className="p-4 bg-secondary rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">
+                      Best Algorithm
+                    </p>
+                    <p className="text-foreground">{selectedNodeInfo.bestAlgo}</p>
+                  </div>
+
+                  <div className="p-4 bg-secondary rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">
+                      Mean Score
+                    </p>
+                    <p className="text-foreground">
+                      {selectedNodeInfo.bestMean?.toFixed(3)}
+                    </p>
                   </div>
 
                   <div className="p-4 bg-secondary rounded-lg">
@@ -1368,45 +1569,28 @@ useEffect(() => {
                       )}
                     </div>
                   </div>
-
-                  <div className="p-4 bg-secondary rounded-lg col-span-2">
-  <p className="text-xs text-gray-600 mb-2">Outgoing Edges & Supporting Algorithms</p>
-  {selectedNodeInfo.outgoingEdges && selectedNodeInfo.outgoingEdges.length > 0 ? (
-    <div className="space-y-2">
-      {selectedNodeInfo.outgoingEdges.map((edge, idx) => (
-        <div key={idx} className="text-foreground text-sm bg-secondary p-2 rounded">
-          <span className="font-medium">Edge: {edge.source} → {edge.target}</span>
-          <div className="ml-2 mt-1 flex flex-wrap gap-1">
-            {Object.entries(edge.scores ?? {}).map(([algo, score]) => (
-              <Badge key={algo} variant="secondary" className="text-foreground">
-                {algo}: {score.toFixed(3)}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-xs text-gray-500">No outgoing edges</p>
-  )}
-</div>
-
-                  {/* <div className="p-4 bg-secondary rounded-lg col-span-2">
-                    <p className="text-xs text-gray-600 mb-2">Incoming Neighbors</p>
-                    <div className="flex flex-wrap gap-2 text-foreground">
-                      {selectedNodeInfo.incomingNeighbors?.slice(0, 5).map((neighbor, idx) => (
-                        <Badge key={idx} variant="secondary">{neighbor}</Badge>
-                      ))}
-                      {selectedNodeInfo.incomingNeighbors && selectedNodeInfo.incomingNeighbors.length > 5 && (
-                        <Badge variant="secondary">
-                          +{selectedNodeInfo.incomingNeighbors.length - 5} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div> */}
+                  
                 </div>
+
+               
+              {selectedEdge && (
+                <div className="mt-0 p-4 bg-secondary rounded-lg">
+                  <p className="text-xs text-gray-600 mb-2">
+                    Edge: {selectedEdge.source} → {selectedEdge.target}
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-foreground">
+                    {selectedNodeInfo.neighbors?.slice(0, 5).map((neighbor, idx) => (
+                      <Badge key={idx} variant="secondary" className='text-foreground'>
+                        {neighbor}
+                      </Badge>
+                    ))}
+                    
+                  </div>
+                </div>
+              )}
               </Card>
             )}
+
               <div className="mt-6">
                 <h4 className="font-semibold text-sm mb-3">Export</h4>
                 <div className="space-y-2">
