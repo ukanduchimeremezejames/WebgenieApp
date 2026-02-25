@@ -126,6 +126,21 @@ const datasetsArray = [
   // other datasets if needed
 ];
 
+const BEELINE_ALGORITHMS = [
+  "GENIE3",
+  "GRNBoost2",
+  "Pearson",
+  "Spearman",
+  "ARACNE",
+  "SINGE",
+  "GRNVBEM",
+  "GRISLI",
+  "SCODE",
+  "SNS",
+  "LEAP",
+  "Arboreto"
+];
+
 console.log("Datasets loaded:", datasetsArray);
 
 export function Explorer() {
@@ -748,25 +763,7 @@ const [layoutType, setLayoutType] = useState<'force' | 'circular' | 'grid' | 'hi
   const [showModules, setShowModules] = useState(true);
   const [edgeType, setEdgeType] = useState<'all' | 'activation' | 'inhibition'>('all');
   const [selectedGene, setSelectedGene] = useState('');
-  // const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
-  // const [selectedEdge, setSelectedEdge] = useState<any>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(true);
-
-  
-const BEELINE_ALGORITHMS = [
-  "GENIE3",
-  "GRNBoost2",
-  "Pearson",
-  "Spearman",
-  "ARACNE",
-  "SINGE",
-  "GRNVBEM",
-  "GRISLI",
-  "SCODE",
-  "SNS",
-  "LEAP",
-  "Arboreto"
-];
 
 
 function simpleHash(str: string): number {
