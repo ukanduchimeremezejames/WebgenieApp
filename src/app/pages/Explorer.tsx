@@ -1538,32 +1538,69 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
             )}
 
               {selectedEdgeInfo && (
-                <Card className="p-6">
-                  <div className="flex justify-between">
-                    <p className="font-medium">
-                      Edge: {selectedEdgeInfo.source} → {selectedEdgeInfo.target}
-                    </p>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedEdgeInfo(null)}>×</Button>
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-xs text-gray-600 mb-2">
-                      Supporting Algorithms
-                    </p>
-
-                    <div className="space-y-2">
-                      {Object.entries(selectedEdgeInfo.scores)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([algo, score]) => (
-                          <div key={algo} className="flex justify-between text-sm">
-                            <span>{algo}</span>
-                            <span className="font-mono">{score.toFixed(3)}</span>
-                          </div>
-                        ))}
+                  <Card className="p-6">
+                    <div className="flex justify-between">
+                      <p className="font-medium">
+                        Edge: {selectedEdgeInfo.source} → {selectedEdgeInfo.target}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedEdgeInfo(null)}
+                      >
+                        ×
+                      </Button>
                     </div>
-                  </div>
-                </Card>
-              )}
+
+                    <div className="mt-4">
+                      <p className="text-xs text-gray-600 mb-2">
+                        Supporting Algorithms
+                      </p>
+
+                      {(() => {
+                        const entries = Object.entries(selectedEdgeInfo.scores || {});
+                        if (!entries.length) return <p>No scores available</p>;
+
+                        const maxScore = Math.max(...entries.map(([_, s]) => s));
+
+                        return (
+                          <div className="space-y-2">
+                            {entries
+                              .sort((a, b) => b[1] - a[1])
+                              .map(([algo, score]) => {
+                                const isBest = score === maxScore;
+
+                                return (
+                                  <div
+                                    key={algo}
+                                    className={`flex justify-between items-center text-gray-800 text-sm p-2 rounded-md transition
+                                      ${
+                                        isBest
+                                          ? "bg-green-100 border border-green-400 font-semibold"
+                                          : "bg-secondary"
+                                      }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span>{algo}</span>
+                                      {isBest && (
+                                        <Badge className="bg-green-500 text-white text-xs">
+                                          Best
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    <span className="font-gray-700">
+                                      {score.toFixed(3)}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </Card>
+                )}
               <div className="mt-6">
                 <h4 className="font-semibold text-sm mb-3">Export</h4>
                 <div className="space-y-2">
