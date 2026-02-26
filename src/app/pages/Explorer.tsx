@@ -720,30 +720,96 @@ const handleExportJSON = () => {
 };
 
 const handleExportCSV = () => {
-  if (!cyRef.current) return;
+  let csvContent = "";
 
-  const edges = filteredEdges.map(edge => ({
-    source: edge.source,
-    target: edge.target,
-    ...edge.scores
-  }));
+  // ========================
+  // EDGES
+  // ========================
+  csvContent += "# Edges\n";
+  csvContent += "source,target,id,type,bestAlgo,bestMean\n";
 
-  if (!edges.length) return;
+  filteredEdges.forEach((edge) => {
+    csvContent += [
+      edge.source,
+      edge.target,
+      edge.id ?? `${edge.source}-${edge.target}`,
+      edge.type ?? "",
+      edge.bestAlgo ?? "",
+      edge.bestMean ?? ""
+    ].join(",") + "\n";
+  });
 
-  const headers = Object.keys(edges[0]);
-  const rows = edges.map(row =>
-    headers.map(h => JSON.stringify(row[h] ?? '')).join(',')
-  );
+  csvContent += "\n";
 
-  const csvContent = [headers.join(','), ...rows].join('\n');
+  // ========================
+  // NODES
+  // ========================
+  csvContent += "# Nodes\n";
+  csvContent += "id,label,degree,inDegree,outDegree,bestAlgo,bestMean,neighbors\n";
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+  filteredNodes.forEach((node) => {
+    const outgoing = filteredEdges.filter(e => e.source === node.id);
+    const incoming = filteredEdges.filter(e => e.target === node.id);
 
-  const link = document.createElement('a');
-  link.download = 'network.csv';
-  link.href = URL.createObjectURL(blob);
+    const degree = outgoing.length + incoming.length;
+    const inDegree = incoming.length;
+    const outDegree = outgoing.length;
+
+    const neighbors = [
+      ...new Set([
+        ...outgoing.map(e => e.target),
+        ...incoming.map(e => e.source)
+      ])
+    ];
+
+    csvContent += [
+      node.id,
+      node.label ?? node.id,
+      degree,
+      inDegree,
+      outDegree,
+      node.bestAlgo ?? "",
+      node.bestMean ?? "",
+      `"${neighbors.join(";")}"`
+    ].join(",") + "\n";
+  });
+
+  // Download
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "network_export.csv");
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
 };
+
+// const handleExportCSV = () => {
+//   if (!cyRef.current) return;
+
+//   const edges = filteredEdges.map(edge => ({
+//     source: edge.source,
+//     target: edge.target,
+//     ...edge.scores
+//   }));
+
+//   if (!edges.length) return;
+
+//   const headers = Object.keys(edges[0]);
+//   const rows = edges.map(row =>
+//     headers.map(h => JSON.stringify(row[h] ?? '')).join(',')
+//   );
+
+//   const csvContent = [headers.join(','), ...rows].join('\n');
+
+//   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+
+//   const link = document.createElement('a');
+//   link.download = 'network.csv';
+//   link.href = URL.createObjectURL(blob);
+//   link.click();
+// };
 
 // Export GraphML
 const handleExportGraphML = () => {
