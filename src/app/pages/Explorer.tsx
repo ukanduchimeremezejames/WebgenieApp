@@ -657,6 +657,27 @@ const cytoscapeStylesheet: cytoscape.StylesheetStyle[] = [
     }
   };
 
+    const handleShare = async () => {
+    const shareData = {
+      title: "Check this out",
+      text: "Take a look at this graph node!",
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        // Mobile & supported browsers
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy link to clipboard
+        await navigator.clipboard.writeText(shareData.url);
+        alert("Link copied to clipboard!");
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
   // Export PNG (existing)
 const handleExportPNG = () => {
   if (cyRef.current) {
@@ -1102,6 +1123,7 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
       <Button 
         variant="secondary" 
         size="sm"
+        onClick={handleShare}
         // icon={<Share2 className="w-4 h-4" />}
       >
         <Share2 className="w-3 h-3 mr-1" />
@@ -1324,7 +1346,7 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                 <Button variant="outline" size="sm" onClick={handleExportPNG}>
                   <Download className="w-4 h-4" />
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleShare}>
                   <Share2 className="w-4 h-4" />
                 </Button>
               </div>
