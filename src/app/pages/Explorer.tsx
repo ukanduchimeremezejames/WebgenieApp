@@ -177,7 +177,7 @@ interface NodeInfo {
 const [activeAlgorithm, setActiveAlgorithm] = useState<string>("GENIE3");
 
 const [selectedNodeInfo, setSelectedNodeInfo] = useState<NodeInfo | null>(null);
-
+const [selectedEdgeInfo, setSelectedEdgeInfo] = useState<EdgeInfo | null>(null);
 const [selectedDatasetId, setSelectedDatasetId] = useState("dyn-bf");
 
 // --- Inside Explorer.tsx ---
@@ -814,42 +814,103 @@ function deterministicEdgeScores(source: string, target: string) {
 
 useEffect(() => {
   if (!cyRef.current) return;
-
   const cy = cyRef.current;
 
-  cy.removeListener("tap", "node");
+  cy.removeListener("tap");
+
+  // NODE CLICK
   cy.on("tap", "node", (event) => {
     const nodeId = event.target.id();
 
-    // Outgoing edges from this node
     const outgoingEdges = filteredEdges.filter(e => e.source === nodeId);
-
-    const outgoingNeighbors = outgoingEdges.map(e => e.target);
     const incomingEdges = filteredEdges.filter(e => e.target === nodeId);
-    const incomingNeighbors = incomingEdges.map(e => e.source);
 
-    // Populate scores for each edge
-    outgoingEdges.forEach(e => {
-      e.scores = deterministicEdgeScores(e.source, e.target);
-    });
+    setSelectedEdgeInfo(null); // clear edge panel
 
     setSelectedNodeInfo({
       id: nodeId,
-      degree: (globalInDegreeMap[nodeId] || 0) + (globalOutDegreeMap[nodeId] || 0),
-      inDegree: globalInDegreeMap[nodeId] || 0,
-      outDegree: globalOutDegreeMap[nodeId] || 0,
-      outgoingNeighbors,
-      incomingNeighbors,
-      outgoingEdges // store edge data for convenience
+      degree: outgoingEdges.length + incomingEdges.length,
+      inDegree: incomingEdges.length,
+      outDegree: outgoingEdges.length,
+      outgoingNeighbors: outgoingEdges.map(e => e.target),
+      incomingNeighbors: incomingEdges.map(e => e.source)
     });
+  });
 
-    setSelectedEdge(null); // optional, clear any previously selected edge
+  // EDGE CLICK
+  cy.on("tap", "edge", (event) => {
+    const edge = event.target.data();
+
+    setSelectedNodeInfo(null); // clear node panel
+
+    setSelectedEdgeInfo({
+      source: edge.source,
+      target: edge.target,
+      scores: edge.scores || deterministicEdgeScores(edge.source, edge.target)
+    });
   });
 
   return () => {
-    cy.removeListener("tap", "node");
+    cy.removeListener("tap");
   };
-}, [filteredEdges, globalInDegreeMap, globalOutDegreeMap]);
+}, [filteredEdges]);
+
+// useEffect(() => {
+//   if (!cyRef.current) return;
+
+//   const cy = cyRef.current;
+
+//   cy.removeListener("tap", "node");
+//   cy.on("tap", "node", (event) => {
+//     const nodeId = event.target.id();
+
+//     // Outgoing edges from this node
+//     const outgoingEdges = filteredEdges.filter(e => e.source === nodeId);
+
+//     const outgoingNeighbors = outgoingEdges.map(e => e.target);
+//     const incomingEdges = filteredEdges.filter(e => e.target === nodeId);
+//     const incomingNeighbors = incomingEdges.map(e => e.source);
+
+//     // Populate scores for each edge
+//     outgoingEdges.forEach(e => {
+//       e.scores = deterministicEdgeScores(e.source, e.target);
+//     });
+
+//     setSelectedNodeInfo({
+//       id: nodeId,
+//       degree: (globalInDegreeMap[nodeId] || 0) + (globalOutDegreeMap[nodeId] || 0),
+//       inDegree: globalInDegreeMap[nodeId] || 0,
+//       outDegree: globalOutDegreeMap[nodeId] || 0,
+//       outgoingNeighbors,
+//       incomingNeighbors,
+//       outgoingEdges // store edge data for convenience
+//     });
+
+//     setSelectedEdge(null); // optional, clear any previously selected edge
+//   });
+
+//   return () => {
+//     cy.removeListener("tap", "node");
+//   };
+// }, [filteredEdges, globalInDegreeMap, globalOutDegreeMap]);
+
+  const InfoBox = ({ label, value }: { label: string; value: any }) => (
+  <div className="p-4 bg-secondary rounded-lg">
+    <p className="text-xs text-gray-600 mb-1">{label}</p>
+    <p className="text-foreground">{value}</p>
+  </div>
+);
+
+const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] }) => (
+  <div className="p-4 bg-secondary rounded-lg col-span-2">
+    <p className="text-xs text-gray-600 mb-2">{title}</p>
+    <div className="flex flex-wrap gap-2">
+      {neighbors?.map((n, i) => (
+        <Badge key={i} variant="secondary">{n}</Badge>
+      ))}
+    </div>
+  </div>
+);
 
   return (
     <div id="explorer" className="min-h-screen py-20 pb-0">
@@ -1290,6 +1351,11 @@ useEffect(() => {
                   Click a gene node to view details
                 </div>
               )}
+              {!selectedEdgeInfo && (
+                <div className="text-sm text-gray-600 text-center py-8">
+                  Click an edge to view details
+                </div>
+              )}
 
               {selectedNodeInfo && (
               <Card className="p-6">
@@ -1366,27 +1432,27 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-secondary rounded-lg col-span-2">
-  <p className="text-xs text-gray-600 mb-2">Outgoing Edges & Supporting Algorithms</p>
-  {selectedNodeInfo.outgoingEdges && selectedNodeInfo.outgoingEdges.length > 0 ? (
-    <div className="space-y-2">
-      {selectedNodeInfo.outgoingEdges.map((edge, idx) => (
-        <div key={idx} className="text-foreground text-sm bg-secondary p-2 rounded">
-          <span className="font-medium">Edge: {edge.source} → {edge.target}</span>
-          <div className="ml-2 mt-1 flex flex-wrap gap-1">
-            {Object.entries(edge.scores ?? {}).map(([algo, score]) => (
-              <Badge key={algo} variant="secondary" className="text-foreground">
-                {algo}: {score.toFixed(3)}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-xs text-gray-500">No outgoing edges</p>
-  )}
-</div>
+                  {/* <div className="p-4 bg-secondary rounded-lg col-span-2">
+                    <p className="text-xs text-gray-600 mb-2">Outgoing Edges & Supporting Algorithms</p>
+                    {selectedNodeInfo.outgoingEdges && selectedNodeInfo.outgoingEdges.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedNodeInfo.outgoingEdges.map((edge, idx) => (
+                          <div key={idx} className="text-foreground text-sm bg-secondary p-2 rounded">
+                            <span className="font-medium">Edge: {edge.source} → {edge.target}</span>
+                            <div className="ml-2 mt-1 flex flex-wrap gap-1">
+                              {Object.entries(edge.scores ?? {}).map(([algo, score]) => (
+                                <Badge key={algo} variant="secondary" className="text-foreground">
+                                  {algo}: {score.toFixed(3)}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500">No outgoing edges</p>
+                    )}
+                  </div> */}
 
                   {/* <div className="p-4 bg-secondary rounded-lg col-span-2">
                     <p className="text-xs text-gray-600 mb-2">Incoming Neighbors</p>
@@ -1404,6 +1470,34 @@ useEffect(() => {
                 </div>
               </Card>
             )}
+
+              {selectedEdgeInfo && (
+                <Card className="p-6">
+                  <div className="flex justify-between">
+                    <p className="font-medium">
+                      Edge: {selectedEdgeInfo.source} → {selectedEdgeInfo.target}
+                    </p>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedEdgeInfo(null)}>×</Button>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs text-gray-600 mb-2">
+                      Supporting Algorithms
+                    </p>
+
+                    <div className="space-y-2">
+                      {Object.entries(selectedEdgeInfo.scores)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([algo, score]) => (
+                          <div key={algo} className="flex justify-between text-sm">
+                            <span>{algo}</span>
+                            <span className="font-mono">{score.toFixed(3)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </Card>
+              )}
               <div className="mt-6">
                 <h4 className="font-semibold text-sm mb-3">Export</h4>
                 <div className="space-y-2">
