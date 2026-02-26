@@ -1222,7 +1222,7 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                 value={scoreThreshold}
                 onValueChange={setScoreThreshold}
                 min={0}
-                max={1}
+                max={0.5}
                 step={0.01}
               />
             </div>
