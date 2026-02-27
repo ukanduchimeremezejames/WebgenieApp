@@ -141,6 +141,64 @@ const BEELINE_ALGORITHMS = [
   "Arboreto"
 ];
 
+type DatasetMeta = {
+  nGenes: number
+  nCells: number
+  isSingleCell: boolean
+  isBulk: boolean
+}
+
+type AlgoProfile = {
+  name: string
+  minGenes?: number
+  maxGenes?: number
+  requiresSingleCell?: boolean
+  requiresBulk?: boolean
+  edgeSparsity: number   // probability edge is inferred
+}
+
+const ALGORITHM_PROFILES: AlgoProfile[] = [
+  {
+    name: "GENIE3",
+    requiresBulk: true,
+    maxGenes: 15000,
+    edgeSparsity: 0.85
+  },
+  {
+    name: "GRNBoost2",
+    requiresSingleCell: true,
+    maxGenes: 20000,
+    edgeSparsity: 0.9
+  },
+  {
+    name: "PIDC",
+    requiresSingleCell: true,
+    minGenes: 50,
+    edgeSparsity: 0.6
+  },
+  {
+    name: "SCODE",
+    requiresSingleCell: true,
+    maxGenes: 5000,
+    edgeSparsity: 0.5
+  }
+]
+
+function isAlgorithmCompatible(
+  algo: AlgoProfile,
+  dataset?: DatasetMeta  
+): boolean {
+
+  if (!dataset) return false   
+
+  if (algo.requiresSingleCell && !dataset.isSingleCell) return false
+  if (algo.requiresBulk && !dataset.isBulk) return false
+  if (algo.minGenes && dataset.nGenes < algo.minGenes) return false
+  if (algo.maxGenes && dataset.nGenes > algo.maxGenes) return false
+
+  return true
+}
+
 console.log("Datasets loaded:", datasetsArray);
 
 export function Explorer() {
@@ -163,6 +221,8 @@ interface SelectedEdge {
 
 const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
 
+const [showGuide, setShowGuide] = useState(true);
+
 interface NodeInfo {
   id: string;
   degree: number;
@@ -184,7 +244,6 @@ const [selectedDatasetId, setSelectedDatasetId] = useState("dyn-bf");
 const selectedDataset = useMemo(() => {
   if (!selectedDatasetId) return null;
 
-  // Try to find dataset
   const dataset = datasetsArray.find(d => d.id === selectedDatasetId);
   if (!dataset) return null;
 
@@ -196,59 +255,54 @@ const selectedDataset = useMemo(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        edgesWithInference = parsed;
-      }
+      if (Array.isArray(parsed) && parsed.length > 0) edgesWithInference = parsed;
     }
   } catch {
     edgesWithInference = null;
   }
 
   // --- If nothing in storage, generate fresh
-  if (!edgesWithInference || edgesWithInference.length === 0) {
-    edgesWithInference = dataset.edges.map(edge => {
-      const scores: Record<string, number> = {};
-      const ALGORITHMS = ["GENIE3", "GRNBoost2", "PIDC"];
+if (!edgesWithInference || edgesWithInference.length === 0) {
+  edgesWithInference = dataset.edges.map(edge => {
+  const scores: Record<string, number | null> = {};
 
-      // realistic small skewed scores
-      ALGORITHMS.forEach(algo => {
-        const r = Math.random();
-        const value =
-          r < 0.85
-            ? 0.01 + Math.random() * 0.14 // weak: 0.01–0.15
-            : 0.15 + Math.random() * 0.45; // strong: 0.15–0.60
-        scores[algo] = parseFloat(value.toFixed(4));
-      });
+  BEELINE_ALGORITHMS.forEach(algoName => {
+    const profile = ALGORITHM_PROFILES.find(a => a.name === algoName);
 
-      // pick best
-      let bestAlgo = "";
-      let bestMean = -Infinity;
-      Object.entries(scores).forEach(([algo, score]) => {
-        if (score > bestMean) {
-          bestMean = score;
-          bestAlgo = algo;
-        }
-      });
+    if (profile && !isAlgorithmCompatible(profile, dataset)) {
+      // Algorithm not compatible → NA
+      scores[algoName] = null;
+    } else {
+      // Algorithm compatible → generate realistic score
+      const hash = simpleHash(`${edge.source}-${edge.target}-${algoName}`);
+      const value = 0.4 + (hash % 500) / 1000; // 0.4–0.9
+      scores[algoName] = parseFloat(value.toFixed(3));
+    }
+  });
 
-      const nScores: Record<string, number> = {};
+  // Compute best algorithm ignoring NA
+  let bestAlgo = "";
+  let bestMean = -Infinity;
+  Object.entries(scores).forEach(([algo, score]) => {
+    if (score != null && score > bestMean) {
+      bestMean = score;
+      bestAlgo = algo;
+    }
+  });
 
-      BEELINE_ALGORITHMS.forEach(algo => {
-        const hash = simpleHash(`${edge.source}-${edge.target}-${algo}`);
-        const value = 0.4 + (hash % 500) / 1000; // 0.4 – 0.9
-        nScores[algo] = parseFloat(value.toFixed(3));
-      });
+  return {
+    ...edge,
+    scores,
+    bestAlgo,
+    bestMean: bestMean === -Infinity ? null : bestMean
+  };
+});
 
-      return {
-        ...edge,
-        scores: nScores
-      };
-    });
-
-    // save to localStorage
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(edgesWithInference));
-    } catch {}
-  }
+  // Save to localStorage
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(edgesWithInference));
+  } catch {}
+}
 
   // --- Build node-level inference
   const nodeMap = new Map<string, number>();
@@ -278,13 +332,14 @@ const selectedDataset = useMemo(() => {
     const algoCounts: Record<string, number> = {};
 
     relatedEdges.forEach(edge => {
-      if (!edge.bestAlgo || edge.bestMean === undefined) return;
+      if (!edge.bestAlgo || edge.bestMean == null) return;
       algoSums[edge.bestAlgo] = (algoSums[edge.bestAlgo] ?? 0) + edge.bestMean;
       algoCounts[edge.bestAlgo] = (algoCounts[edge.bestAlgo] ?? 0) + 1;
     });
 
     let nodeBestAlgo = "";
     let nodeBestMean = 0;
+
     Object.keys(algoSums).forEach(algo => {
       const mean = algoSums[algo] / algoCounts[algo];
       if (mean > nodeBestMean) {
@@ -296,8 +351,11 @@ const selectedDataset = useMemo(() => {
     return { ...node, bestAlgo: nodeBestAlgo, bestMean: parseFloat(nodeBestMean.toFixed(4)) };
   });
 
-  // --- Compute edge score range
-  const edgeScores = edgesWithInference.map(e => e.bestMean).filter(v => typeof v === "number");
+  // --- Compute edge score range (skip nulls)
+  const edgeScores = edgesWithInference
+    .map(e => e.bestMean)
+    .filter((v): v is number => v != null);
+
   const minEdge = edgeScores.length ? Math.min(...edgeScores) : 0;
   const maxEdge = edgeScores.length ? Math.max(...edgeScores) : 0;
 
@@ -307,18 +365,15 @@ const selectedDataset = useMemo(() => {
     nodes: nodesWithInference,
     scoreRange: {
       edges: [minEdge, maxEdge],
-      nodes: [
-        nodesWithInference.length
-          ? Math.min(...nodesWithInference.map(n => n.bestMean))
-          : 0,
-        nodesWithInference.length
-          ? Math.max(...nodesWithInference.map(n => n.bestMean))
-          : 0
-      ]
+      nodes: nodesWithInference.length
+        ? [
+            Math.min(...nodesWithInference.map(n => n.bestMean ?? 0)),
+            Math.max(...nodesWithInference.map(n => n.bestMean ?? 0))
+          ]
+        : [0, 0]
     }
   };
 }, [selectedDatasetId, datasetsArray]);
-
 const inferenceData = useMemo(() => {
   if (!selectedDataset) return null; // or [] depending on return type
   return generateMockInferenceData(selectedDataset);
@@ -326,24 +381,23 @@ const inferenceData = useMemo(() => {
 
 
 const predictedBestAlgorithm = useMemo(() => {
-  if (!inferenceData) return ""; // safeguard if inferenceData is null
+  if (!inferenceData) return "";
 
   const algoScores: Record<string, number[]> = {};
 
-  inferenceData.edges?.forEach(edge => {
+  inferenceData.edges.forEach(edge => {
     Object.entries(edge.scores ?? {}).forEach(([algo, score]) => {
-      const numScore = score as number; // safe cast
-      if (!algoScores[algo]) algoScores[algo] = [];
-      algoScores[algo].push(numScore);
+      if (score != null) {
+        if (!algoScores[algo]) algoScores[algo] = [];
+        algoScores[algo].push(score);
+      }
     });
   });
 
   let bestAlgo = "";
-  let bestMean = 0;
-
+  let bestMean = -Infinity;
   Object.entries(algoScores).forEach(([algo, scores]) => {
     const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-
     if (mean > bestMean) {
       bestMean = mean;
       bestAlgo = algo;
@@ -353,38 +407,31 @@ const predictedBestAlgorithm = useMemo(() => {
   return bestAlgo;
 }, [inferenceData]);
 
-
 function getNodeBestAlgorithm(nodeId: string) {
-  if (!inferenceData?.edges?.length) {
-    return { bestAlgo: "", bestMean: 0 };
-  }
+  if (!inferenceData?.edges?.length) return { bestAlgo: "", bestMean: null };
 
   const relatedEdges = inferenceData.edges.filter(
-    (e) => e.source === nodeId || e.target === nodeId
+    e => e.source === nodeId || e.target === nodeId
   );
-
-  if (!relatedEdges.length) return { bestAlgo: "", bestMean: 0 };
+  if (!relatedEdges.length) return { bestAlgo: "", bestMean: null };
 
   const algoScores: Record<string, number[]> = {};
 
-  relatedEdges.forEach((edge) => {
-    const scores = edge.scores ?? {};
-    Object.entries(scores).forEach(([algo, score]) => {
-      // Generate realistic score if missing
-      const numScore =
-        score !== undefined ? Number(score) : randomFloat(0.5, 1.0);
-      if (!algoScores[algo]) algoScores[algo] = [];
-      algoScores[algo].push(numScore);
+  relatedEdges.forEach(edge => {
+    Object.entries(edge.scores ?? {}).forEach(([algo, score]) => {
+      if (score != null) {
+        if (!algoScores[algo]) algoScores[algo] = [];
+        algoScores[algo].push(score);
+      }
     });
   });
 
   let bestAlgo = "";
-  let bestMean = 0;
+  let bestMean = null;
 
   Object.entries(algoScores).forEach(([algo, scores]) => {
-    if (!scores.length) return;
     const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-    if (mean > bestMean) {
+    if (bestMean === null || mean > bestMean) {
       bestMean = mean;
       bestAlgo = algo;
     }
@@ -741,6 +788,26 @@ const handleExportJSON = () => {
 };
 
 const handleExportCSV = () => {
+//   const header = [
+//   "Source",
+//   "Target",
+//   ...ALGORITHM_PROFILES.map(a => a.name)
+// ]
+
+// const rows = edges.map(edge => {
+
+//   const values = ALGORITHM_PROFILES.map(a => {
+//     const s = edge.scores?.[a.name]
+//     return s === null || s === undefined ? "NA" : s
+//   })
+
+//   return [
+//     edge.source,
+//     edge.target,
+//     ...values
+//   ]
+// })
+
   let csvContent = "";
 
   // ========================
@@ -748,6 +815,11 @@ const handleExportCSV = () => {
   // ========================
   csvContent += "# Edges\n";
   csvContent += "source,target,id,type,bestAlgo,bestMean\n";
+
+  const validScores = Object.values(edge.scores).filter(s => s != null);
+const bestMean = validScores.length
+  ? Math.max(...validScores)
+  : null;
 
   filteredEdges.forEach((edge) => {
     csvContent += [
@@ -862,15 +934,89 @@ function simpleHash(str: string): number {
 }
 
 
-function generateEdgeScores(edgeId: string, datasetId: string) {
-  const base = simpleHash(edgeId + datasetId) % 1000;
-  const scores: Record<string, number> = {};
-  BEELINE_ALGORITHMS.forEach((algo, idx) => {
-    const variation = (simpleHash(edgeId + algo) % 100) / 1000; 
-    scores[algo] = parseFloat((0.3 + (base / 1000) * 0.6 + variation).toFixed(3));
-    if (scores[algo] > 0.9) scores[algo] = 0.9; 
-  });
-  return scores;
+// function generateEdgeScores(edgeId: string, datasetId: string) {
+//   const base = simpleHash(edgeId + datasetId) % 1000;
+//   const scores: Record<string, number> = {};
+//   BEELINE_ALGORITHMS.forEach((algo, idx) => {
+//     const variation = (simpleHash(edgeId + algo) % 100) / 1000; 
+//     scores[algo] = parseFloat((0.3 + (base / 1000) * 0.6 + variation).toFixed(3));
+//     if (scores[algo] > 0.9) scores[algo] = 0.9; 
+//   });
+//   return scores;
+// }
+
+function generateEdgeScores(
+  source: string,
+  target: string,
+  datasetMeta?: DatasetMeta
+): Record<string, number | null> {
+
+  const scores: Record<string, number | null> = {}
+
+  ALGORITHM_PROFILES.forEach(algo => {
+
+    const compatible = isAlgorithmCompatible(algo, datasetMeta)
+
+    if (!compatible) {
+      scores[algo.name] = null
+      return
+    }
+
+    if (!compatible) {
+      console.log(`${algo.name} incompatible → null`)
+    }
+
+    function hashCode(str: string) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+    // simulate sparsity: not all algorithms infer all edges
+    const hash = Math.abs(hashCode(source + target + algo.name))
+    const prob = (hash % 1000) / 1000
+
+    if (prob > algo.edgeSparsity) {
+      scores[algo.name] = null
+      return
+    }
+
+    // deterministic score
+    const score = 0.5 + ((hash % 400) / 1000)  // 0.5 - 0.9
+    scores[algo.name] = parseFloat(score.toFixed(3))
+  })
+
+  return scores
+}
+
+function computeBestAlgorithm(
+  scores: Record<string, number | null>
+) {
+  const valid = Object.entries(scores)
+    .filter(([_, s]) => s !== null)
+
+  if (!valid.length) {
+    return { bestAlgo: null, bestScore: null }
+  }
+
+  const [algo, score] = valid.reduce((max, curr) =>
+    curr[1]! > max[1]! ? curr : max
+  )
+
+  return { bestAlgo: algo, bestScore: score }
+}
+
+function computeNodeMean(scoresList: (number | null)[]) {
+  const valid = scoresList.filter(s => s !== null)
+
+  if (!valid.length) return null
+
+  return parseFloat(
+    (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(3)
+  )
 }
 
 const enrichedEdges = selectedDataset.edges.map((e) => ({
@@ -1183,6 +1329,69 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
   )}
 </div>
 
+<Card className="mb-4">
+  <CardHeader>
+    <div className="flex items-center justify-between">
+      <h2 className="text-lg font-semibold">WebGenie Network Explorer Workflow</h2>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          setShowGuide((prev) => !prev)
+        }
+      >
+        {showGuide ? "Hide" : "Show"}
+      </Button>
+    </div>
+  </CardHeader>
+  {showGuide && (
+    <CardContent className="space-y-2 text-sm">
+      <ol className="list-decimal list-inside space-y-1">
+        <li>
+          <strong>Select a Dataset:</strong> Use the dropdown to choose a gene regulatory network (GRN). Biological or synthetic networks are available.
+        </li>
+        <li>
+          <strong>View the Network Graph:</strong> Nodes are genes, edges are regulatory relationships. Use pan and zoom to explore the network.
+        </li>
+        <li>
+          <strong>Filter Nodes and Edges:</strong>
+          <ul className="list-disc list-inside ml-4">
+            <li>Search Nodes: Enter gene names to highlight them.</li>
+            <li>Edge Type Filter: Filter by activation, repression, or all.</li>
+            <li>Top-K Edges: Select top scoring edges.</li>
+            <li>Score Threshold: Hide edges below a confidence score.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Select Nodes or Edges:</strong>
+          <ul className="list-disc list-inside ml-4">
+            <li>Click a Node: View degree, neighbors, and best scoring algorithms.</li>
+            <li>Click an Edge: See algorithm-specific scores. Incompatible algorithms show <strong>NA</strong>.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Explore Algorithm Scores:</strong> The highest scoring algorithm per edge is highlighted. NA indicates incompatibility.
+        </li>
+        <li>
+          <strong>Adjust Network Layout:</strong> Choose layouts like <em>cose</em>, <em>circle</em>, or <em>grid</em> to rearrange nodes.
+        </li>
+        <li>
+          <strong>Export or Share:</strong> Download the network view or share it. Scores and layout are preserved.
+        </li>
+        <li>
+          <strong>Tips for Exploration:</strong>
+          <ul className="list-disc list-inside ml-4">
+            <li>Focus on edges with higher confidence scores.</li>
+            <li>Combine top-K and score threshold filters to simplify the network.</li>
+            <li>Hover for tooltips explaining edge scores.</li>
+          </ul>
+        </li>
+      </ol>
+    </CardContent>
+  )}
+</Card>
+
+
         <div id="search" className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar - Controls */}
           <Card className="p-6 lg:col-span-1">
@@ -1244,7 +1453,7 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                 value={scoreThreshold}
                 onValueChange={setScoreThreshold}
                 min={0}
-                max={0.5}
+                max={selectedDataset?.scoreRange?.edges[1]?.toFixed(2) ?? 1}
                 step={0.01}
               />
             </div>
@@ -1323,6 +1532,8 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
             </div>
           </div>
         </Card>
+
+        
         
 
           {/* Main Canvas */}
@@ -1580,10 +1791,23 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                       </p>
 
                       {(() => {
-                        const entries = Object.entries(selectedEdgeInfo.scores || {});
-                        if (!entries.length) return <p>No scores available</p>;
+                        const entries = Object.entries(selectedEdgeInfo.scores || {})
+                        .filter(([_, s]) => s !== null)
 
-                        const maxScore = Math.max(...entries.map(([_, s]) => s));
+                      if (!entries.length) {
+                        return <p>No compatible algorithms inferred this edge.</p>
+                      }
+                        // const entries = Object.entries(selectedEdgeInfo.scores || {});
+                        // if (!entries.length) return <p>No scores available</p>;
+
+                        // const maxScore = Math.max(...entries.map(([_, s]) => s));
+
+                        const maxScore = Math.max(
+                          ...Object.values(selectedEdgeInfo.scores || {})
+                            .filter((s): s is number => s !== null)
+                        )
+
+                        if (!isFinite(maxScore)) return false
 
                         return (
                           <div className="space-y-2">
@@ -1612,7 +1836,8 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                                     </div>
 
                                     <span className="font-gray-700">
-                                      {score.toFixed(3)}
+                                    {score !== null ? score.toFixed(3) : "NA"}
+                                      {/* {score.toFixed(3)} */}
                                     </span>
                                   </div>
                                 );
