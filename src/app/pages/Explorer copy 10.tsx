@@ -46,139 +46,79 @@ const dynLLDataset = buildBeelineDataset(dynLL);
 const dynTFDataset = buildBeelineDataset(dynTF);
 
 const datasetsArray = [
-  {
-    id: "gsd",
-    name: "GSD",
-    organism: "Human",
-    description: "Gonadal sex determination gene regulatory network",
-    ...GSDDataset
-  },
-  {
-    id: "hsc",
-    name: "HSC",
-    organism: "Mouse",
-    description: "Hematopoietic stem cell gene regulatory network",
-    ...HSCDataset
-  },
-  {
-    id: "mcad",
-    name: "mCAD",
-    organism: "Mouse",
-    description: "Mouse cortical arealization gene regulatory network",
-    ...mCADDataset
-  },
-  {
-    id: "vsc",
-    name: "VSC",
-    organism: "Mouse",
-    description: "Ventral spinal cord gene regulatory network",
-    ...VSCDataset
-  },
-
-  // === Synthetic datasets with isSynthetic ===
-  {
-    id: "dyn-bf",
-    name: "dyn-BF",
-    organism: "Synthetic",
-    description: "Bifurcating synthetic GRN",
-    meta: {
-      nGenes: dynBFDataset.nodes.length,
-      nCells: 500,
-      isSingleCell: true,
-      isBulk: false,
-      hasTFList: true,
-      isTimeSeries: true,
-      sparsity: 0.7,
-      isSynthetic: true
-    },
-    ...dynBFDataset
-  },
-  {
+{
+  id: "gsd",
+  name: "GSD",
+  organism: "Human",
+  description: "Gonadal sex determination gene regulatory network",
+  ...GSDDataset
+},
+{
+  id: "hsc",
+  name: "HSC",
+  organism: "Mouse",
+  description: "Hematopoietic stem cell gene regulatory network",
+  ...HSCDataset
+},
+{
+  id: "mcad",
+  name: "mCAD",
+  organism: "Mouse",
+  description: "Mouse cortical arealization gene regulatory network",
+  ...mCADDataset
+},
+{
+  id: "vsc",
+  name: "VSC",
+  organism: "Mouse",
+  description: "Ventral spinal cord gene regulatory network",
+  ...VSCDataset
+},
+{
+  id: "dyn-bf",
+  name: "dyn-BF",
+  organism: "Synthetic",
+  description: "Bifurcating synthetic GRN",
+  ...dynBFDataset
+},
+{
     id: "dyn-bfc",
     name: "dyn-BFC",
     organism: "Synthetic",
     description: "Bifurcating-Converging synthetic GRN",
-    meta: {
-      nGenes: dynBFCDataset.nodes.length,
-      nCells: 500,
-      isSingleCell: true,
-      isBulk: false,
-      hasTFList: true,
-      isTimeSeries: true,
-      sparsity: 0.7,
-      isSynthetic: true
-    },
     ...dynBFCDataset
-  },
-  {
-    id: "dyn-cy",
-    name: "dyn-CY",
-    organism: "Synthetic",
-    description: "Cyclic synthetic GRN",
-    meta: {
-      nGenes: dynCYDataset.nodes.length,
-      nCells: 500,
-      isSingleCell: true,
-      isBulk: false,
-      hasTFList: true,
-      isTimeSeries: true,
-      sparsity: 0.7,
-      isSynthetic: true
-    },
-    ...dynCYDataset
-  },
-  {
-    id: "dyn-li",
-    name: "dyn-LI",
-    organism: "Synthetic",
-    description: "Linear synthetic GRN",
-    meta: {
-      nGenes: dynLIDataset.nodes.length,
-      nCells: 500,
-      isSingleCell: true,
-      isBulk: false,
-      hasTFList: true,
-      isTimeSeries: true,
-      sparsity: 0.7,
-      isSynthetic: true
-    },
-    ...dynLIDataset
-  },
-  {
-    id: "dyn-ll",
-    name: "dyn-LL",
-    organism: "Synthetic",
-    description: "Long linear synthetic GRN with terminal feedback repression",
-    meta: {
-      nGenes: dynLLDataset.nodes.length,
-      nCells: 500,
-      isSingleCell: true,
-      isBulk: false,
-      hasTFList: true,
-      isTimeSeries: true,
-      sparsity: 0.7,
-      isSynthetic: true
-    },
-    ...dynLLDataset
-  },
-  {
-    id: "dyn-tf",
-    name: "dyn-TF",
-    organism: "Synthetic",
-    description: "Synthetic transcription factor hub network",
-    meta: {
-      nGenes: dynTFDataset.nodes.length,
-      nCells: 500,
-      isSingleCell: true,
-      isBulk: false,
-      hasTFList: true,
-      isTimeSeries: true,
-      sparsity: 0.7,
-      isSynthetic: true
-    },
-    ...dynTFDataset
-  }
-]
+},
+{
+  id: "dyn-cy",
+  name: "dyn-CY",
+  organism: "Synthetic",
+  description: "Cyclic synthetic GRN",
+  ...dynCYDataset
+},
+{
+  id: "dyn-li",
+  name: "dyn-LI",
+  organism: "Synthetic",
+  description: "Linear synthetic GRN",
+  ...dynLIDataset
+},
+{
+  id: "dyn-ll",
+  name: "dyn-LL",
+  organism: "Synthetic",
+  description: "Long linear synthetic GRN with terminal feedback repression",
+  ...dynLLDataset
+},
+{
+  id: "dyn-tf",
+  name: "dyn-TF",
+  organism: "Synthetic",
+  description: "Synthetic transcription factor hub network",
+  ...dynTFDataset
+}
+
+  // other datasets if needed
+];
 
 const BEELINE_ALGORITHMS = [
   "GENIE3",
@@ -200,9 +140,6 @@ type DatasetMeta = {
   nCells: number
   isSingleCell: boolean
   isBulk: boolean
-  sparsity?: number        
-  hasTFList?: boolean      
-  isTimeSeries?: boolean
 }
 
 type AlgoProfile = {
@@ -211,233 +148,47 @@ type AlgoProfile = {
   maxGenes?: number
   requiresSingleCell?: boolean
   requiresBulk?: boolean
-  requiresTFList?: boolean
-  requiresTimeSeries?: boolean
-  undirected?: boolean
-  maxCells?: number
-  minCells?: number
-  dynamic?: boolean
-  edgeSparsity: number
+  edgeSparsity: number   // probability edge is inferred
 }
 
-
 const ALGORITHM_PROFILES: AlgoProfile[] = [
-
-  
   {
     name: "GENIE3",
-    requiresTFList: true,
-    maxGenes: 20000,
-    edgeSparsity: 0.88
+    requiresBulk: true,
+    maxGenes: 15000,
+    edgeSparsity: 0.85
   },
   {
     name: "GRNBoost2",
     requiresSingleCell: true,
-    requiresTFList: true,
-    maxGenes: 25000,
-    edgeSparsity: 0.92
+    maxGenes: 20000,
+    edgeSparsity: 0.9
   },
-  {
-    name: "Arboreto",
-    requiresSingleCell: true,
-    requiresTFList: true,
-    maxGenes: 30000,
-    edgeSparsity: 0.93
-  },
-
-
   {
     name: "PIDC",
     requiresSingleCell: true,
     minGenes: 50,
-    maxGenes: 8000,
-    undirected: true,
-    edgeSparsity: 0.65
+    edgeSparsity: 0.6
   },
-  {
-    name: "ARACNE",
-    requiresBulk: true,
-    minGenes: 50,
-    maxGenes: 10000,
-    undirected: true,
-    edgeSparsity: 0.60
-  },
-
-
-  {
-    name: "Pearson",
-    minGenes: 10,
-    undirected: true,
-    edgeSparsity: 0.95
-  },
-  {
-    name: "Spearman",
-    minGenes: 10,
-    undirected: true,
-    edgeSparsity: 0.95
-  },
-
-
   {
     name: "SCODE",
     requiresSingleCell: true,
-    requiresTimeSeries: true,
     maxGenes: 5000,
-    dynamic: true,
-    edgeSparsity: 0.55
-  },
-  {
-    name: "SINGE",
-    requiresSingleCell: true,
-    requiresTimeSeries: true,
-    dynamic: true,
-    edgeSparsity: 0.50
-  },
-  {
-    name: "LEAP",
-    requiresSingleCell: true,
-    requiresTimeSeries: true,
-    undirected: false,
-    dynamic: true,
-    edgeSparsity: 0.70
-  },
-
-
-  {
-    name: "GRNVBEM",
-    requiresSingleCell: true,
-    maxGenes: 8000,
-    edgeSparsity: 0.75
-  },
-  {
-    name: "GRISLI",
-    requiresSingleCell: true,
-    requiresTimeSeries: true,
-    dynamic: true,
-    edgeSparsity: 0.60
-  },
-  {
-    name: "SNS",
-    requiresSingleCell: true,
-    maxGenes: 10000,
-    edgeSparsity: 0.72
+    edgeSparsity: 0.5
   }
 ]
 
-// const ALGORITHM_PROFILES: AlgoProfile[] = [
-
-//   {
-//     name: "GENIE3",
-//     requiresTFList: true,
-//     maxGenes: 20000,
-//     edgeSparsity: 0.88 
-//   },
-//   {
-//     name: "GRNBoost2",
-//     requiresSingleCell: true,
-//     requiresTFList: true,
-//     maxGenes: 25000,
-//     edgeSparsity: 0.90
-//   },
-//   {
-//     name: "Arboreto",
-//     requiresSingleCell: true,
-//     requiresTFList: true,
-//     maxGenes: 30000,
-//     edgeSparsity: 0.91
-//   },
-
-  
-//   {
-//     name: "PIDC",
-//     requiresSingleCell: true,
-//     minGenes: 50,
-//     maxGenes: 8000,
-//     undirected: true,
-//     edgeSparsity: 0.70 
-//   },
-//   {
-//     name: "ARACNE",
-//     requiresBulk: true,
-//     minGenes: 50,
-//     maxGenes: 10000,
-//     undirected: true,
-//     edgeSparsity: 0.75
-//   },
-
-//   {
-//     name: "Pearson",
-//     minGenes: 10,
-//     undirected: true,
-//     edgeSparsity: 0.99
-//   },
-//   {
-//     name: "Spearman",
-//     minGenes: 10,
-//     undirected: true,
-//     edgeSparsity: 0.99
-//   },
-
-//   {
-//     name: "SCODE",
-//     requiresSingleCell: true,
-//     requiresTimeSeries: true,
-//     maxGenes: 5000,
-//     dynamic: true,
-//     edgeSparsity: 0.75
-//   },
-//   {
-//     name: "SINGE",
-//     requiresSingleCell: true,
-//     requiresTimeSeries: true,
-//     dynamic: true,
-//     edgeSparsity: 0.70
-//   },
-//   {
-//     name: "LEAP",
-//     requiresSingleCell: true,
-//     requiresTimeSeries: true,
-//     undirected: false,
-//     dynamic: true,
-//     edgeSparsity: 0.80
-//   },
-
-//   {
-//     name: "GRNVBEM",
-//     requiresSingleCell: true,
-//     maxGenes: 8000,
-//     edgeSparsity: 0.78
-//   },
-//   {
-//     name: "GRISLI",
-//     requiresSingleCell: true,
-//     requiresTimeSeries: true,
-//     dynamic: true,
-//     edgeSparsity: 0.70
-//   },
-//   {
-//     name: "SNS",
-//     requiresSingleCell: true,
-//     maxGenes: 10000,
-//     edgeSparsity: 0.75
-//   }
-// ];
-
 function isAlgorithmCompatible(
   algo: AlgoProfile,
-  dataset?: DatasetMeta
+  dataset?: DatasetMeta  
 ): boolean {
 
-  if (!dataset) return false
+  if (!dataset) return false   
 
   if (algo.requiresSingleCell && !dataset.isSingleCell) return false
   if (algo.requiresBulk && !dataset.isBulk) return false
-  if (algo.requiresTFList && !dataset.hasTFList) return false
-  if (algo.requiresTimeSeries && !dataset.isTimeSeries) return false
   if (algo.minGenes && dataset.nGenes < algo.minGenes) return false
   if (algo.maxGenes && dataset.nGenes > algo.maxGenes) return false
-  if (algo.minCells && dataset.nCells < algo.minCells) return false
-  if (algo.maxCells && dataset.nCells > algo.maxCells) return false
 
   return true
 }
@@ -466,11 +217,6 @@ const [selectedEdge, setSelectedEdge] = useState<SelectedEdge | null>(null);
 
 const [showGuide, setShowGuide] = useState(true);
 
-const [tooltip, setTooltip] = useState<{
-  x: number
-  y: number
-  content: string
-} | null>(null)
 interface NodeInfo {
   id: string;
   degree: number;
@@ -488,6 +234,7 @@ const [selectedNodeInfo, setSelectedNodeInfo] = useState<NodeInfo | null>(null);
 const [selectedEdgeInfo, setSelectedEdgeInfo] = useState<EdgeInfo | null>(null);
 const [selectedDatasetId, setSelectedDatasetId] = useState("dyn-bf");
 
+// --- Inside Explorer.tsx ---
 const selectedDataset = useMemo(() => {
   if (!selectedDatasetId) return null;
 
@@ -496,6 +243,7 @@ const selectedDataset = useMemo(() => {
 
   const storageKey = `beeline_scores_${selectedDatasetId}`;
 
+  // --- Check localStorage
   let edgesWithInference: BeelineEdge[] | null = null;
   try {
     const saved = localStorage.getItem(storageKey);
@@ -507,76 +255,50 @@ const selectedDataset = useMemo(() => {
     edgesWithInference = null;
   }
 
-
+  // --- If nothing in storage, generate fresh
 if (!edgesWithInference || edgesWithInference.length === 0) {
   edgesWithInference = dataset.edges.map(edge => {
-    const scores: Record<string, number | null> = {};
+  const scores: Record<string, number | null> = {};
 
-    BEELINE_ALGORITHMS.forEach(algoName => {
-      const profile = ALGORITHM_PROFILES.find(a => a.name === algoName);
+  BEELINE_ALGORITHMS.forEach(algoName => {
+    const profile = ALGORITHM_PROFILES.find(a => a.name === algoName);
 
-      if (!profile || !isAlgorithmCompatible(profile, dataset.meta)) {
-        scores[algoName] = null;
-        return;
-      }
-
-      // undirected edges: allow one ordering
-      if (profile.undirected && edge.source > edge.target) {
-        scores[algoName] = null;
-        return;
-      }
-
-      // TF-dependent edges
-      if (profile.requiresTFList && !edge.isTFEdge) {
-        scores[algoName] = null;
-        return;
-      }
-
-      // deterministic realistic scoring
-      const genePenalty = dataset.meta.nGenes > 15000 ? 0.85 : 1;
-      const cellPenalty = dataset.meta.nCells < 200 ? 0.9 : 1;
-
+    if (profile && !isAlgorithmCompatible(profile, dataset)) {
+      // Algorithm not compatible → NA
+      scores[algoName] = null;
+    } else {
+      // Algorithm compatible → generate realistic score
       const hash = simpleHash(`${edge.source}-${edge.target}-${algoName}`);
-      const baseScore = 0.45 + ((hash % 400) / 1000); // 0.45–0.85
-      const adjusted = baseScore * genePenalty * cellPenalty;
-
-      scores[algoName] = parseFloat(adjusted.toFixed(3));
-    });
-
-    // fallback if everything null
-    if (!Object.values(scores).some(s => s != null)) {
-      const fallback = ALGORITHM_PROFILES.find(a => isAlgorithmCompatible(a, dataset.meta));
-      if (fallback) {
-        const hash = simpleHash(`${edge.source}-${edge.target}-${fallback.name}`);
-        scores[fallback.name] = parseFloat((0.5 + (hash % 300) / 1000).toFixed(3));
-      }
+      const value = 0.4 + (hash % 500) / 1000; // 0.4–0.9
+      scores[algoName] = parseFloat(value.toFixed(3));
     }
-
-    // bestAlgo
-    let bestAlgo = "";
-    let bestMean = -Infinity;
-    Object.entries(scores).forEach(([algo, score]) => {
-      if (score != null && score > bestMean) {
-        bestMean = score;
-        bestAlgo = algo;
-      }
-    });
-
-    return {
-      ...edge,
-      scores,
-      bestAlgo,
-      bestMean: bestMean === -Infinity ? null : bestMean
-    };
   });
 
-  // save to localStorage
+  // Compute best algorithm ignoring NA
+  let bestAlgo = "";
+  let bestMean = -Infinity;
+  Object.entries(scores).forEach(([algo, score]) => {
+    if (score != null && score > bestMean) {
+      bestMean = score;
+      bestAlgo = algo;
+    }
+  });
+
+  return {
+    ...edge,
+    scores,
+    bestAlgo,
+    bestMean: bestMean === -Infinity ? null : bestMean
+  };
+});
+
+  // Save to localStorage
   try {
-    const storageKey = `beeline_scores_${dataset.id}`;
     localStorage.setItem(storageKey, JSON.stringify(edgesWithInference));
   } catch {}
 }
 
+  // --- Build node-level inference
   const nodeMap = new Map<string, number>();
   edgesWithInference.forEach(edge => {
     nodeMap.set(edge.source, (nodeMap.get(edge.source) ?? 0) + 1);
@@ -594,6 +316,7 @@ if (!edgesWithInference || edgesWithInference.length === 0) {
     node.degree = node.neighbors.length;
   });
 
+  // --- Node-level bestMean
   const nodesWithInference = nodes.map(node => {
     const relatedEdges = edgesWithInference.filter(
       e => e.source === node.id || e.target === node.id
@@ -622,6 +345,7 @@ if (!edgesWithInference || edgesWithInference.length === 0) {
     return { ...node, bestAlgo: nodeBestAlgo, bestMean: parseFloat(nodeBestMean.toFixed(4)) };
   });
 
+  // --- Compute edge score range (skip nulls)
   const edgeScores = edgesWithInference
     .map(e => e.bestMean)
     .filter((v): v is number => v != null);
@@ -643,23 +367,12 @@ if (!edgesWithInference || edgesWithInference.length === 0) {
         : [0, 0]
     }
   };
-  
 }, [selectedDatasetId, datasetsArray]);
-
 const inferenceData = useMemo(() => {
-
-  const datasetMeta: DatasetMeta = {
-  nGenes: selectedDataset.nodes.length,
-  nCells: selectedDataset.nCells ?? 500,
-  isSingleCell: selectedDataset.isSingleCell ?? true,
-  isBulk: selectedDataset.isBulk ?? false,
-  sparsity: selectedDataset.sparsity ?? 0.7,
-  hasTFList: selectedDataset.hasTFList ?? true,
-  isTimeSeries: selectedDataset.isTimeSeries ?? false
-}
-  if (!selectedDataset) return null; 
+  if (!selectedDataset) return null; // or [] depending on return type
   return generateMockInferenceData(selectedDataset);
 }, [selectedDataset]);
+
 
 const predictedBestAlgorithm = useMemo(() => {
   if (!inferenceData) return "";
@@ -721,7 +434,7 @@ function getNodeBestAlgorithm(nodeId: string) {
   return { bestAlgo, bestMean };
 }
 
-
+// Helper: generate random float in range
 function randomFloat(min: number, max: number) {
   return Math.random() * (max - min) + min;
 }
@@ -740,21 +453,26 @@ const [minConsensus, setMinConsensus] = useState(DEFAULT_FILTERS.minConsensus);
 const filteredEdges = useMemo(() => {
   if (!selectedDataset) return [];
 
+  // Copy edges
   let edges = [...selectedDataset.edges];
 
-
+  // Edge type
   if (edgeFilter !== "all") {
     edges = edges.filter(e => e.type === edgeFilter);
   }
 
+  // Sort edges descending by bestMean
   edges.sort((a, b) => (b.bestMean ?? 0) - (a.bestMean ?? 0));
 
+  // --- Gradual threshold: take edges above the threshold
+  // threshold: 0–1, scaled to min-max in dataset
   const minScore = Math.min(...edges.map(e => e.bestMean ?? 0));
   const maxScore = Math.max(...edges.map(e => e.bestMean ?? 0));
   const scaledThreshold = minScore + scoreThreshold[0] * (maxScore - minScore);
 
   edges = edges.filter(e => (e.bestMean ?? 0) >= scaledThreshold);
 
+  // TopK
   edges = edges.slice(0, topK[0]);
 
   return edges;
@@ -821,42 +539,29 @@ const cytoscapeElements = useMemo(() => {
   }
 }));
 
-const filteredEdgesWithScores = filteredEdges.map(e => {
-  if (!e.scores) {
-    return {
-      ...e,
-      scores: generateEdgeScores(e.source, e.target, selectedDataset.meta, { isTFEdge: e.isTFEdge })
+  // const nodes = filteredNodes.map((node) => ({
+  //   data: {
+  //     id: node.id,
+  //     label: node.label,
+  //     importance: node.importance ?? 1,
+  //     degree: node.degree,
+  //     inDegree: node.inDegree,
+  //     outDegree: node.outDegree,
+  //     bestAlgo: node.bestAlgo,
+  //     bestMean: node.bestMean,
+  //     neighbors: node.neighbors
+  //   }
+  // }));
+
+  const edges = filteredEdges.map((edge) => ({
+    data: {
+      id: `${edge.source}-${edge.target}`,
+      source: edge.source,
+      target: edge.target,
+      type: edge.type,
+      score: Math.max(0, ...Object.values(edge.scores ?? {}))
     }
-  }
-  return e
-});
-
-const edges = filteredEdgesWithScores.map((edge) => ({
-  data: {
-    id: `${edge.source}-${edge.target}`,
-    source: edge.source,
-    target: edge.target,
-    type: edge.type,
-    bestAlgo: edge.bestAlgo,
-    bestMean: edge.bestMean,
-    scores: edge.scores, 
-  }
-}));
-
-const datasetMeta: DatasetMeta = {
-  nGenes: selectedDataset.nodes.length,
-  nCells: selectedDataset.nCells ?? 500,
-  isSingleCell: selectedDataset.isSingleCell ?? true,
-  isBulk: selectedDataset.isBulk ?? false,
-  sparsity: selectedDataset.sparsity ?? 0.7,
-  hasTFList: selectedDataset.hasTFList ?? true,
-  isTimeSeries: selectedDataset.isTimeSeries ?? false
-}
-
-const scoredEdges = edges.map(edge => ({
-  ...edge,
-  scores: generateEdgeScores(edge.source, edge.target, datasetMeta, { isTFEdge: edge.isTFEdge }),
-}));
+  }));
 
   return [...nodes, ...edges];
 
@@ -910,6 +615,7 @@ const globalDegreeMap = useMemo(() => {
     }
   }));
 
+// Global out-degree map
 const globalOutDegreeMap = useMemo(() => {
   return filteredEdges.reduce<Record<string, number>>((acc, edge) => {
     acc[edge.source] = (acc[edge.source] || 0) + 1;
@@ -917,6 +623,7 @@ const globalOutDegreeMap = useMemo(() => {
   }, {});
 }, [filteredEdges]);
 
+// Global in-degree map
 const globalInDegreeMap = useMemo(() => {
   return filteredEdges.reduce<Record<string, number>>((acc, edge) => {
     acc[edge.target] = (acc[edge.target] || 0) + 1;
@@ -1012,7 +719,7 @@ const cytoscapeStylesheet: cytoscape.StylesheetStyle[] = [
     }
   };
 
-  // Export PNG 
+  // Export PNG (existing)
 const handleExportPNG = () => {
   if (cyRef.current) {
     const png = cyRef.current.png({ full: true, scale: 2 });
@@ -1026,7 +733,7 @@ const handleExportPNG = () => {
 // Export SVG
 const handleExportSVG = () => {
   if (cyRef.current) {
-    const svg = cyRef.current.svg({ full: true }); 
+    const svg = cyRef.current.svg({ full: true }); // Cytoscape.js SVG export
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
     const link = document.createElement('a');
     link.download = 'network.svg';
@@ -1075,66 +782,61 @@ const handleExportJSON = () => {
 };
 
 const handleExportCSV = () => {
-  if (!selectedDataset) return;
+//   const header = [
+//   "Source",
+//   "Target",
+//   ...ALGORITHM_PROFILES.map(a => a.name)
+// ]
 
-  const edgesToExport = selectedDataset.edges ?? [];
+// const rows = edges.map(edge => {
 
-  const header = [
-    "source",
-    "target",
-    "id",
-    "type",
-    // ...ALGORITHM_PROFILES.map(a => a.name),
-    // "bestAlgo",
-    // "bestMean"
-  ].join(",");
+//   const values = ALGORITHM_PROFILES.map(a => {
+//     const s = edge.scores?.[a.name]
+//     return s === null || s === undefined ? "NA" : s
+//   })
 
-  let csvContent = "# Edges\n" + header + "\n";
+//   return [
+//     edge.source,
+//     edge.target,
+//     ...values
+//   ]
+// })
 
-  edgesToExport.forEach(edge => {
-  const entries = Object.entries(edge.scores || {});
+  let csvContent = "";
 
-  // find the max score for this edge
-  const validScores = entries.map(([_, s]) => s).filter((s): s is number => s != null);
-  const maxScore = validScores.length > 0 ? Math.max(...validScores) : null;
+  // ========================
+  // EDGES
+  // ========================
+  csvContent += "# Edges\n";
+  csvContent += "source,target,id,type,bestAlgo,bestMean\n";
 
-  // sort entries descending by score
-  const sortedEntries = entries.sort(([aAlgo, aScore], [bAlgo, bScore]) => {
-    const aVal = aScore ?? -1;
-    const bVal = bScore ?? -1;
-    return bVal - aVal;
+  const validScores = Object.values(edge.scores).filter(s => s != null);
+const bestMean = validScores.length
+  ? Math.max(...validScores)
+  : null;
+
+  filteredEdges.forEach((edge) => {
+    csvContent += [
+      edge.source,
+      edge.target,
+      edge.id ?? `${edge.source}-${edge.target}`,
+      edge.type ?? "",
+      edge.bestAlgo ?? "",
+      edge.bestMean ?? ""
+    ].join(",") + "\n";
   });
 
-  // map to CSV values
-  const algoScores = ALGORITHM_PROFILES.map(a => {
-  const entry = Object.entries(edge.scores || {}).find(([algoName]) => algoName === a.name);
-  const score = entry?.[1] ?? null;
+  csvContent += "\n";
 
-  // Mark the best score with a star (optional)
-  const allScores = Object.values(edge.scores || {}).filter((s): s is number => s != null);
-  const maxScore = allScores.length ? Math.max(...allScores) : null;
-  const isBest = score !== null && score === maxScore;
+  // ========================
+  // NODES
+  // ========================
+  csvContent += "# Nodes\n";
+  csvContent += "id,label,degree,inDegree,outDegree,bestAlgo,bestMean,neighbors\n";
 
-  return score !== null ? (isBest ? `${score.toFixed(3)}*` : score.toFixed(3)) : "";
-});
-
-  csvContent += [
-    edge.source ?? "NA",
-    edge.target ?? "NA",
-    edge.id ?? `${edge.source}-${edge.target}`,
-    edge.type ?? "",
-    // ...algoScores,
-    // edge.bestAlgo ?? "NA",
-    // edge.bestMean != null ? edge.bestMean.toFixed(3) : "NA"
-  ].join(",") + "\n";
-});
-
-  csvContent += "\n# Nodes\n";
-  csvContent += "id,label,degree,inDegree,outDegree,bestAlgo,neighbors\n";
-
-  selectedDataset.nodes.forEach(node => {
-    const outgoing = edgesToExport.filter(e => e.source === node.id);
-    const incoming = edgesToExport.filter(e => e.target === node.id);
+  filteredNodes.forEach((node) => {
+    const outgoing = filteredEdges.filter(e => e.source === node.id);
+    const incoming = filteredEdges.filter(e => e.target === node.id);
 
     const degree = outgoing.length + incoming.length;
     const inDegree = incoming.length;
@@ -1153,22 +855,48 @@ const handleExportCSV = () => {
       degree,
       inDegree,
       outDegree,
-      node.bestAlgo ?? "NA",
-      // node.bestMean != null ? node.bestMean.toFixed(3) : "NA",
-      `"${neighbors.join(";")}"`,
+      node.bestAlgo ?? "",
+      node.bestMean ?? "",
+      `"${neighbors.join(";")}"`
     ].join(",") + "\n";
   });
 
+  // Download
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", `${selectedDataset.name}_network_export.csv`);
+  link.setAttribute("download", "network_export.csv");
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
 
+// const handleExportCSV = () => {
+//   if (!cyRef.current) return;
+
+//   const edges = filteredEdges.map(edge => ({
+//     source: edge.source,
+//     target: edge.target,
+//     ...edge.scores
+//   }));
+
+//   if (!edges.length) return;
+
+//   const headers = Object.keys(edges[0]);
+//   const rows = edges.map(row =>
+//     headers.map(h => JSON.stringify(row[h] ?? '')).join(',')
+//   );
+
+//   const csvContent = [headers.join(','), ...rows].join('\n');
+
+//   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+
+//   const link = document.createElement('a');
+//   link.download = 'network.csv';
+//   link.href = URL.createObjectURL(blob);
+//   link.click();
+// };
 
 // Export GraphML
 const handleExportGraphML = () => {
@@ -1200,86 +928,60 @@ function simpleHash(str: string): number {
 }
 
 
+// function generateEdgeScores(edgeId: string, datasetId: string) {
+//   const base = simpleHash(edgeId + datasetId) % 1000;
+//   const scores: Record<string, number> = {};
+//   BEELINE_ALGORITHMS.forEach((algo, idx) => {
+//     const variation = (simpleHash(edgeId + algo) % 100) / 1000; 
+//     scores[algo] = parseFloat((0.3 + (base / 1000) * 0.6 + variation).toFixed(3));
+//     if (scores[algo] > 0.9) scores[algo] = 0.9; 
+//   });
+//   return scores;
+// }
+
 function generateEdgeScores(
   source: string,
   target: string,
-  datasetMeta?: DatasetMeta & { isSynthetic?: boolean },
-  edgeMeta?: { isTFEdge?: boolean }
+  datasetMeta?: DatasetMeta
 ): Record<string, number | null> {
 
   const scores: Record<string, number | null> = {}
 
-  for (const algo of ALGORITHM_PROFILES) {
+  ALGORITHM_PROFILES.forEach(algo => {
 
-    let compatible = datasetMeta
-      ? isAlgorithmCompatible(algo, datasetMeta)
-      : true
-
-    // 🚀 Override for synthetic datasets: all algorithms can run
-    if (datasetMeta?.isSynthetic) compatible = true
+    const compatible = isAlgorithmCompatible(algo, datasetMeta)
 
     if (!compatible) {
       scores[algo.name] = null
-      continue
+      return
     }
 
-    // Skip TF edges if algorithm strictly needs TF list
-    if (
-      algo.requiresTFList &&
-      edgeMeta?.isTFEdge === false &&
-      !datasetMeta?.isSynthetic
-    ) {
-      scores[algo.name] = null
-      continue
+    if (!compatible) {
+      console.log(`${algo.name} incompatible → null`)
     }
 
-    // Skip upper-triangle for undirected, except self-loop
-    if (
-      algo.undirected &&
-      source > target &&
-      source !== target &&
-      !datasetMeta?.isSynthetic
-    ) {
-      scores[algo.name] = null
-      continue
-    }
-
-    // Randomized realistic score generation
-    const hash = simpleHash(source + target + algo.name)
-    const probability = (hash % 1000) / 1000
-
-    // Adjust edge sparsity slightly for synthetic datasets
-    const sparsity = datasetMeta?.isSynthetic
-      ? Math.min(algo.edgeSparsity + 0.1, 0.99)
-      : algo.edgeSparsity
-
-    if (probability > sparsity) {
-      scores[algo.name] = null
-      continue
-    }
-
-    const genePenalty =
-      datasetMeta?.nGenes && datasetMeta.nGenes > 15000 ? 0.85 : 1
-
-    const cellPenalty =
-      datasetMeta?.nCells && datasetMeta.nCells < 200 ? 0.9 : 1
-
-    const base = 0.45 + ((hash % 400) / 1000) // 0.45–0.85
-    const adjusted = base * genePenalty * cellPenalty
-
-    scores[algo.name] = parseFloat(adjusted.toFixed(3))
+    function hashCode(str: string) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
   }
+  return Math.abs(hash)
+}
 
-  // Fallback: if everything is null, give a baseline score
-  if (!Object.values(scores).some(s => s !== null)) {
-    for (const algo of ALGORITHM_PROFILES) {
-      if (!scores[algo.name]) {
-        const hash = simpleHash(source + target + algo.name)
-        const base = 0.45 + ((hash % 200) / 1000)
-        scores[algo.name] = parseFloat(base.toFixed(3))
-      }
+    // simulate sparsity: not all algorithms infer all edges
+    const hash = Math.abs(hashCode(source + target + algo.name))
+    const prob = (hash % 1000) / 1000
+
+    if (prob > algo.edgeSparsity) {
+      scores[algo.name] = null
+      return
     }
-  }
+
+    // deterministic score
+    const score = 0.5 + ((hash % 400) / 1000)  // 0.5 - 0.9
+    scores[algo.name] = parseFloat(score.toFixed(3))
+  })
 
   return scores
 }
@@ -1316,7 +1018,21 @@ const enrichedEdges = selectedDataset.edges.map((e) => ({
   scores: generateEdgeScores(`${e.source}-${e.target}`, selectedDataset.id)
 }));
 
+function deterministicAlgo(id: string): string {
+  const hash = simpleHash(id);
+  const index = hash % BEELINE_ALGORITHMS.length;
+  return BEELINE_ALGORITHMS[index];
+}
 
+function deterministicEdgeScores(source: string, target: string) {
+  const scores: Record<string, number> = {};
+  BEELINE_ALGORITHMS.forEach(algo => {
+    const hash = simpleHash(source + target + algo);
+    const normalized = (hash % 1000) / 1000; // 0–0.999
+    scores[algo] = parseFloat((0.5 + normalized * 0.45).toFixed(3)); // score 0.5–0.95
+  });
+  return scores;
+}
   useEffect(() => {
   if (cyRef.current) {
     cyRef.current.layout({ name: layout }).run();
@@ -1329,13 +1045,14 @@ useEffect(() => {
 
   cy.removeListener("tap");
 
+  // NODE CLICK
   cy.on("tap", "node", (event) => {
     const nodeId = event.target.id();
 
     const outgoingEdges = filteredEdges.filter(e => e.source === nodeId);
     const incomingEdges = filteredEdges.filter(e => e.target === nodeId);
 
-    setSelectedEdgeInfo(null); 
+    setSelectedEdgeInfo(null); // clear edge panel
 
     setSelectedNodeInfo({
       id: nodeId,
@@ -1347,21 +1064,62 @@ useEffect(() => {
     });
   });
 
-
+  // EDGE CLICK
   cy.on("tap", "edge", (event) => {
-  const edge = event.target.data();
+    const edge = event.target.data();
 
-  setSelectedEdgeInfo({
-    source: edge.source,
-    target: edge.target,
-    scores: edge.scores ?? {},  
+    setSelectedNodeInfo(null); // clear node panel
+
+    setSelectedEdgeInfo({
+      source: edge.source,
+      target: edge.target,
+      scores: edge.scores || deterministicEdgeScores(edge.source, edge.target)
+    });
   });
-});
 
   return () => {
     cy.removeListener("tap");
   };
 }, [filteredEdges]);
+
+// useEffect(() => {
+//   if (!cyRef.current) return;
+
+//   const cy = cyRef.current;
+
+//   cy.removeListener("tap", "node");
+//   cy.on("tap", "node", (event) => {
+//     const nodeId = event.target.id();
+
+//     // Outgoing edges from this node
+//     const outgoingEdges = filteredEdges.filter(e => e.source === nodeId);
+
+//     const outgoingNeighbors = outgoingEdges.map(e => e.target);
+//     const incomingEdges = filteredEdges.filter(e => e.target === nodeId);
+//     const incomingNeighbors = incomingEdges.map(e => e.source);
+
+//     // Populate scores for each edge
+//     outgoingEdges.forEach(e => {
+//       e.scores = deterministicEdgeScores(e.source, e.target);
+//     });
+
+//     setSelectedNodeInfo({
+//       id: nodeId,
+//       degree: (globalInDegreeMap[nodeId] || 0) + (globalOutDegreeMap[nodeId] || 0),
+//       inDegree: globalInDegreeMap[nodeId] || 0,
+//       outDegree: globalOutDegreeMap[nodeId] || 0,
+//       outgoingNeighbors,
+//       incomingNeighbors,
+//       outgoingEdges // store edge data for convenience
+//     });
+
+//     setSelectedEdge(null); // optional, clear any previously selected edge
+//   });
+
+//   return () => {
+//     cy.removeListener("tap", "node");
+//   };
+// }, [filteredEdges, globalInDegreeMap, globalOutDegreeMap]);
 
   const InfoBox = ({ label, value }: { label: string; value: any }) => (
   <div className="p-4 bg-secondary rounded-lg">
@@ -2007,7 +1765,7 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
             )}
 
               {selectedEdgeInfo && (
-                  <Card className="p-6 mt-5">
+                  <Card className="p-6">
                     <div className="flex justify-between">
                       <p className="font-medium">
                         Edge: {selectedEdgeInfo.source} → {selectedEdgeInfo.target}
@@ -2027,32 +1785,30 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                       </p>
 
                       {(() => {
+                        const entries = Object.entries(selectedEdgeInfo.scores || {})
+                        .filter(([_, s]) => s !== null)
 
-                      const entries = Object.entries(selectedEdgeInfo.scores || {})
+                      if (!entries.length) {
+                        return <p>No compatible algorithms inferred this edge.</p>
+                      }
+                        // const entries = Object.entries(selectedEdgeInfo.scores || {});
+                        // if (!entries.length) return <p>No scores available</p>;
 
-                        if (!entries.length) {
-                          return <p>No scores available.</p>
-                        }
+                        // const maxScore = Math.max(...entries.map(([_, s]) => s));
 
-                        const validScores = entries
-                          .map(([_, s]) => s)
-                          .filter((s): s is number => s !== null)
+                        const maxScore = Math.max(
+                          ...Object.values(selectedEdgeInfo.scores || {})
+                            .filter((s): s is number => s !== null)
+                        )
 
-                        const maxScore =
-                          validScores.length > 0 ? Math.max(...validScores) : null
+                        if (!isFinite(maxScore)) return false
 
                         return (
                           <div className="space-y-2">
                             {entries
-                              .sort((a, b) => {
-                                const aVal = a[1] ?? -1
-                                const bVal = b[1] ?? -1
-                                return bVal - aVal
-                              })
+                              .sort((a, b) => b[1] - a[1])
                               .map(([algo, score]) => {
-
-                                const isBest =
-                                  maxScore !== null && score === maxScore
+                                const isBest = score === maxScore;
 
                                 return (
                                   <div
@@ -2073,14 +1829,15 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                                       )}
                                     </div>
 
-                                    <span>
-                                      {score !== null ? score.toFixed(3) : "NA"}
+                                    <span className="font-gray-700">
+                                    {score !== null ? score.toFixed(3) : "NA"}
+                                      {/* {score.toFixed(3)} */}
                                     </span>
                                   </div>
-                                )
+                                );
                               })}
                           </div>
-                        )
+                        );
                       })()}
                     </div>
                   </Card>
@@ -2122,7 +1879,3 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
     </div>
   );
 }
-function deterministicEdgeScores(source: any, target: any): any {
-  throw new Error('Function not implemented.');
-}
-
