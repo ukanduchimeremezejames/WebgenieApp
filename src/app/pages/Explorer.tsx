@@ -1044,102 +1044,174 @@ const handleExportJSON = () => {
     nodes: cy.nodes().map(n => ({
       data: {
         id: n.id(),
-        label: n.data().label
+        label: n.data().label,
+        bestAlgo: n.data().bestAlgo,  // include bestAlgo if needed
+        // add any other node properties you want here
       }
     })),
     edges: cy.edges().map(e => {
-      const source = e.source().id();
-      const target = e.target().id();
-
-      const matchedEdge = filteredEdges.find(
-        ed => ed.source === source && ed.target === target
-      );
-
+      const data = e.data(); // get all data stored in the edge
       return {
         data: {
-          id: `${source}-${target}`,
-          source,
-          target,
-          scores: matchedEdge?.scores ?? {}
+          id: data.id ?? `${data.source}-${data.target}`,
+          source: data.source,
+          target: data.target,
+          scores: data.scores ?? {},  // preserve all scores
+          type: data.type ?? "",      // optional: include type if exists
+          // add other edge properties here if needed
         }
       };
     })
   };
 
-  const blob = new Blob(
-    [JSON.stringify({ elements }, null, 2)],
-    { type: "application/json" }
-  );
+  const blob = new Blob([JSON.stringify({ elements }, null, 2)], {
+    type: "application/json",
+  });
 
   saveAs(blob, "network.json");
 };
 
+console.log("What do I have?", {
+  filteredEdges,
+  selectedEdgeInfo
+})
+console.log(filteredEdges[0])
+
+const exportEdgesToCSV = (edges: any[]) => {
+  if (!edges?.length) return
+
+  const allAlgos = Array.from(
+    new Set(
+      edges.flatMap(edge =>
+        edge.scores ? Object.keys(edge.scores) : []
+      )
+    )
+  ).sort()
+
+  const headers = [
+    "source",
+    "target",
+    "type",
+    ...allAlgos,
+    "bestAlgo",
+    "bestMean"
+  ]
+
+  const rows = edges.map(edge => [
+    edge.source,
+    edge.target,
+    edge.type,
+    ...allAlgos.map(algo =>
+      edge.scores?.[algo] != null
+        ? Number(edge.scores[algo]).toFixed(3)
+        : "NA"
+    ),
+    edge.bestAlgo,
+    edge.bestMean != null
+      ? Number(edge.bestMean).toFixed(3)
+      : "NA"
+  ])
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(r => r.map(v => `"${v}"`).join(","))
+  ].join("\n")
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;"
+  })
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = `beeline_${selectedDatasetId}_edges.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+const exportVisibleEdgesToCSV = () => {
+  if (!cyRef.current) return
+
+  const visibleEdges = cyRef.current.edges(":visible")
+
+  if (visibleEdges.length === 0) {
+    console.warn("No visible edges")
+    return
+  }
+
+  const edgesData = visibleEdges.map(edge => edge.data())
+
+  // Collect all algorithms dynamically
+  const allAlgos = Array.from(
+    new Set(
+      edgesData.flatMap(edge =>
+        edge.scores ? Object.keys(edge.scores) : []
+      )
+    )
+  ).sort()
+
+  const headers = [
+    "source",
+    "target",
+    "type",
+    ...allAlgos,
+    // "bestAlgo",
+    // "bestMean"
+  ]
+
+  const rows = edgesData.map(edge => [
+    edge.source,
+    edge.target,
+    edge.type,
+    ...allAlgos.map(algo =>
+      edge.scores?.[algo] != null
+        ? Number(edge.scores[algo]).toFixed(3)
+        : "NA"
+    ),
+    // edge.bestAlgo,
+    // edge.bestMean != null
+      // ? Number(edge.bestMean).toFixed(3)
+      // : "NA"
+  ])
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(r => r.map(v => `"${v}"`).join(","))
+  ].join("\n")
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;"
+  })
+
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement("a")
+  link.href = url
+  link.download = `${selectedDatasetId}_edges.csv`
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
+
 const handleExportCSV = () => {
   if (!selectedDataset) return;
 
-  const edgesToExport = selectedDataset.edges ?? [];
+  const edges = selectedDataset.edges ?? [];
 
-  const header = [
-    "source",
-    "target",
-    "id",
-    "type",
-    // ...ALGORITHM_PROFILES.map(a => a.name),
-    // "bestAlgo",
-    // "bestMean"
-  ].join(",");
-
-  let csvContent = "# Edges\n" + header + "\n";
-
-  edgesToExport.forEach(edge => {
-  const entries = Object.entries(edge.scores || {});
-
-  // find the max score for this edge
-  const validScores = entries.map(([_, s]) => s).filter((s): s is number => s != null);
-  const maxScore = validScores.length > 0 ? Math.max(...validScores) : null;
-
-  // sort entries descending by score
-  const sortedEntries = entries.sort(([aAlgo, aScore], [bAlgo, bScore]) => {
-    const aVal = aScore ?? -1;
-    const bVal = bScore ?? -1;
-    return bVal - aVal;
-  });
-
-  // map to CSV values
-  const algoScores = ALGORITHM_PROFILES.map(a => {
-  const entry = Object.entries(edge.scores || {}).find(([algoName]) => algoName === a.name);
-  const score = entry?.[1] ?? null;
-
-  // Mark the best score with a star (optional)
-  const allScores = Object.values(edge.scores || {}).filter((s): s is number => s != null);
-  const maxScore = allScores.length ? Math.max(...allScores) : null;
-  const isBest = score !== null && score === maxScore;
-
-  return score !== null ? (isBest ? `${score.toFixed(3)}*` : score.toFixed(3)) : "";
-});
-
-  csvContent += [
-    edge.source ?? "NA",
-    edge.target ?? "NA",
-    edge.id ?? `${edge.source}-${edge.target}`,
-    edge.type ?? "",
-    // ...algoScores,
-    // edge.bestAlgo ?? "NA",
-    // edge.bestMean != null ? edge.bestMean.toFixed(3) : "NA"
-  ].join(",") + "\n";
-});
-
-  csvContent += "\n# Nodes\n";
+  // CSV header for nodes
+  let csvContent = "# Nodes\n";
   csvContent += "id,label,degree,inDegree,outDegree,bestAlgo,neighbors\n";
 
   selectedDataset.nodes.forEach(node => {
-    const outgoing = edgesToExport.filter(e => e.source === node.id);
-    const incoming = edgesToExport.filter(e => e.target === node.id);
+    // Calculate outgoing and incoming edges
+    const outgoing = edges.filter(e => e.source === node.id);
+    const incoming = edges.filter(e => e.target === node.id);
 
     const degree = outgoing.length + incoming.length;
     const inDegree = incoming.length;
     const outDegree = outgoing.length;
 
+    // Collect unique neighbors
     const neighbors = [
       ...new Set([
         ...outgoing.map(e => e.target),
@@ -1154,21 +1226,20 @@ const handleExportCSV = () => {
       inDegree,
       outDegree,
       node.bestAlgo ?? "NA",
-      // node.bestMean != null ? node.bestMean.toFixed(3) : "NA",
       `"${neighbors.join(";")}"`,
     ].join(",") + "\n";
   });
 
+  // Download CSV
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", `${selectedDataset.name}_network_export.csv`);
+  link.setAttribute("download", `${selectedDataset.name}_nodes_export.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
-
 
 // Export GraphML
 const handleExportGraphML = () => {
@@ -2094,8 +2165,39 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
                   </button>
                   <button onClick={handleExportCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-accent transition-colors">
                     <Download className="w-4 h-4" />
-                    Download Edge List (CSV)
+                    Download Node List (CSV)
                   </button>
+                  {/* <Button className="w-full flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-accent transition-colors" onClick={() => exportEdgesToCSV(filteredEdges)}>
+                    Export All Edges to CSV
+                  </Button> */}
+                  {/* <Button
+                  onClick={() => {
+                    if (!selectedDataset) return
+
+                    const edges = selectedDataset.edges
+
+                      // replicate your filtering logic
+                      .filter(e => edgeFilter === "all" || e.type === edgeFilter)
+                      .sort((a, b) => (b.bestMean ?? 0) - (a.bestMean ?? 0))
+
+                    const minScore = Math.min(...edges.map(e => e.bestMean ?? 0))
+                    const maxScore = Math.max(...edges.map(e => e.bestMean ?? 0))
+                    const scaledThreshold =
+                      minScore + scoreThreshold[0] * (maxScore - minScore)
+
+                    const finalEdges = edges
+                      .filter(e => (e.bestMean ?? 0) >= scaledThreshold)
+                      .slice(0, topK[0])
+
+                    exportEdgesToCSV(finalEdges)
+                  }}
+                >
+                  Export Filtered Edges
+                </Button> */}
+                <button onClick={exportVisibleEdgesToCSV} className="w-full flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-accent transition-colors">
+                  <Download className="w-4 h-4" />
+                  Download Edge List (CSV)
+                </button>
                   <button onClick={handleExportJSON} className="w-full flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-accent transition-colors">
                     <Download className="w-4 h-4" />
                     Download as JSON
