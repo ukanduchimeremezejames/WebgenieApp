@@ -564,7 +564,7 @@ const selectedDataset = useMemo(() => {
 }, [selectedDatasetId]);
 
 const inferenceData = useMemo(() => {
-  if (!selectedDataset) return null; // or [] depending on return type
+  if (!selectedDataset) return null; 
   return generateMockInferenceData(selectedDataset);
 }, [selectedDataset]);
 
@@ -678,6 +678,27 @@ const runBenchmark = async () => {
 
     setProgress(currentProgress);
   }, 1200);
+  const newRun = {
+  id: crypto.randomUUID(),
+  timestamp: new Date().toISOString(),
+  metrics,
+};
+
+// ✅ Save to storage
+saveRun(selectedDatasetId, newRun);
+
+// ✅ Update UI instantly (no refresh needed)
+// setRecentResults(prev => [
+//   {
+//     id: newRun.id,
+//     dataset: selectedDatasetId,
+//     algorithm: selectedDatasetId,
+//     auroc: metrics.auroc,
+//     auprc: metrics.auprc,
+//     createdAt: newRun.timestamp,
+//   },
+//   ...prev, // newest first
+// ]);
 };
 
 

@@ -124,40 +124,6 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-function getAllRunsFromStorage() {
-  const runs: any[] = [];
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-
-    if (!key) continue;
-
-    // ✅ Only pick benchmark metrics
-    if (key.startsWith("benchmark_metrics_")) {
-      const dataset = key.replace("benchmark_metrics_", "");
-
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-
-        const metrics = JSON.parse(raw);
-
-        runs.push({
-          id: key,
-          dataset,
-          algorithm: "GENIE3", // or dynamic later
-          timestamp: new Date().toISOString(), // fallback
-          metrics,
-        });
-      } catch (err) {
-        console.error("Failed parsing:", key);
-      }
-    }
-  }
-
-  return runs;
-}
-
 // const GLOBAL_RUNS_KEY = "benchmark_runs_all";
 
 // function getAllRuns() {
@@ -732,47 +698,6 @@ useEffect(() => {
       </div> */}
 
       {/* Recent Results */}
-
-      {runs.length === 0 ? (
-  <div className="text-sm text-muted-foreground">
-    No runs available yet.
-  </div>
-) : (
-  <div className="space-y-4">
-    {runs.map((run) => (
-      <div key={run.id} className="p-3 rounded-lg border bg-accent/50">
-        <div className="flex items-center justify-between mb-1">
-          <div className="text-sm font-medium">
-            {run.dataset}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Just now
-          </div>
-        </div>
-
-        <div className="text-xs text-muted-foreground mb-2">
-          {run.algorithm}
-        </div>
-
-        <div className="flex gap-4 text-xs">
-          <div>
-            <span className="text-muted-foreground">AUROC:</span>{" "}
-            <span className="font-medium">
-              {run?.metrics?.auroc ?? 0}
-            </span>
-          </div>
-
-          <div>
-            <span className="text-muted-foreground">AUPRC:</span>{" "}
-            <span className="font-medium">
-              {run?.metrics?.auprc ?? 0}
-            </span>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
 <div className="rounded-lg border bg-card p-6 mt-5">
   <div className="mb-6">
     <h2 className="text-lg font-semibold">Recent Results</h2>
