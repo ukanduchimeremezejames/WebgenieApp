@@ -112,6 +112,7 @@ function getAllRunsFromStorage(): Run[] {
 
     try {
       const raw = localStorage.getItem(key);
+      console.log(raw);
       if (!raw) continue;
 
       const parsed = JSON.parse(raw);
@@ -798,7 +799,11 @@ useEffect(() => {
   </div>
 ) : (
   <div className="space-y-4">
-    {runs.map((run) => (
+    {runs
+      .slice()               
+      .reverse()             
+      .slice(0, 6)  
+      .map((run) => (
       <div key={run.id} className="p-3 rounded-lg border bg-accent/50">
         <div className="flex items-center justify-between mb-1">
           <div className="text-sm font-medium">
@@ -810,7 +815,9 @@ useEffect(() => {
         </div>
 
         <div className="text-xs text-muted-foreground mb-2">
-          {getRandomAlgorithm()}
+          {/* {getRandomAlgorithm()} */}
+          {run?.algorithm ?? getRandomAlgorithm()}
+          
         </div>
 
         <div className="flex gap-4 text-xs">

@@ -329,6 +329,10 @@ export function DatasetPage() {
   const [showResult, setShowResult] = useState(false);
   const [selectedAlgorithms, setSelectedAlgorithms] = useState<string[]>(['GENIE3']);
 
+  
+
+  
+
   const datasetId = location.pathname.substring(9);       // "/dataset/<id>"
   const ds = allDatasets.find(d => d.id === datasetId);   // Resolve dataset
 
@@ -557,6 +561,10 @@ const mockAlgorithms = [
   }
 ];
 
+const selectedAlgorithm = mockAlgorithms.find(
+  (a) => a.id === selectedAlgorithms[0]
+);
+
 const [selectedDatasetId, setSelectedDatasetId] = useState("GENIE3");
 
 const selectedDataset = useMemo(() => {
@@ -601,14 +609,18 @@ function getStoredRuns(datasetId: string) {
   return raw ? JSON.parse(raw) : [];
 }
 
+const algorithm = selectedAlgorithm
+    ? `${selectedAlgorithm.name}`
+    : selectedAlgorithms;
 function saveRun(datasetId: string, run: any) {
   const existing = getStoredRuns(datasetId);
-  const updated = [...existing, { ...run, timestamp: new Date().toISOString(), selectedAlgorithms }];
+  const updated = [...existing, { ...run, timestamp: new Date().toISOString(), algorithm }];
   localStorage.setItem(
     getStorageKey(datasetId),
     JSON.stringify(updated)
   );
 }
+
 
 useEffect(() => {
   const storedRuns = getStoredRuns(datasetId);
@@ -839,7 +851,36 @@ async function handleDownloadGroundTruth() {
             >
               Download Ground Truth
             </Button2>
+
             <Select
+  value={selectedAlgorithms[0]}
+  onValueChange={(value) => {
+    setSelectedDatasetId(value);
+    setSelectedAlgorithms([value]); // ✅ replace with selected
+  }}
+>
+  {/* <SelectTrigger className="w-[220px]">
+    <SelectValue placeholder="Select Algorithm">
+      {selectedAlgorithms[0] || "Select An Algorithm To Run"}
+    </SelectValue>
+  </SelectTrigger> */}
+  <SelectTrigger className="w-[220px]">
+  {selectedAlgorithm
+    ? `${selectedAlgorithm.name}`
+    : "Select An Algorithm To Run"}
+</SelectTrigger>
+
+  <SelectContent>
+    {mockAlgorithms.map((algorithm) => (
+      <SelectItem key={algorithm.id} value={algorithm.id}>
+        <strong>{algorithm.name}</strong> |{" "}
+        <em>{algorithm.category}</em>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+
+            {/* <Select
               value={selectedDatasetId}
              
               onValueChange={(value) => {
@@ -864,7 +905,7 @@ async function handleDownloadGroundTruth() {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
             
 
             <Button2
