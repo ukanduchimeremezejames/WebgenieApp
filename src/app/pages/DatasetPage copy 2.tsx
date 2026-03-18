@@ -319,6 +319,7 @@ export function DatasetPage() {
 
   // 1️⃣ ALL HOOKS FIRST
   const [step, setStep] = useState<PopupStep>("summary");
+  const [algorithm, setAlgorithm] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -564,7 +565,7 @@ const selectedDataset = useMemo(() => {
 }, [selectedDatasetId]);
 
 const inferenceData = useMemo(() => {
-  if (!selectedDataset) return null; // or [] depending on return type
+  if (!selectedDataset) return null; 
   return generateMockInferenceData(selectedDataset);
 }, [selectedDataset]);
 
@@ -596,14 +597,38 @@ function generateFakeMetrics(ds: any) {
 const getStorageKey = (datasetId: string) =>
   `benchmark_runs_${datasetId}`;
 
+// function getStoredRuns(datasetId: string) {
+//   const raw = localStorage.getItem(getStorageKey(datasetId));
+//   return raw ? JSON.parse(raw) : [];
+// }
+
 function getStoredRuns(datasetId: string) {
-  const raw = localStorage.getItem(getStorageKey(datasetId));
-  return raw ? JSON.parse(raw) : [];
+  try {
+    const raw = localStorage.getItem(getStorageKey(datasetId));
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    console.error("Failed to parse stored runs:", error);
+    return [];
+  }
 }
+
+type Run = {
+  id: string;
+  algorithm: string;
+  result: any;
+  createdAt: string;
+};
+
+if (typeof window === "undefined") return [];
 
 function saveRun(datasetId: string, run: any) {
   const existing = getStoredRuns(datasetId);
-  const updated = [...existing, { ...run, timestamp: new Date().toISOString(), selectedAlgorithms }];
+  const MAX_RUNS = 50;
+  const updated = [...existing, run].slice(-MAX_RUNS);
+  // const updated = existing.some(r => r.id === run.id)
+  // ? existing
+  // : [...existing, run];
+  // const updated = [...existing, run];
   localStorage.setItem(
     getStorageKey(datasetId),
     JSON.stringify(updated)
@@ -654,11 +679,18 @@ const runBenchmark = async () => {
       const newRun = {
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
+        algorithm: selectedDataset?.name || "Unknown",
         metrics,
       };
 
       // ✅ Save run to localStorage
-      saveRun(datasetId, newRun);
+      // saveRun(datasetId, newRun);
+        saveRun(datasetId, {
+          id: crypto.randomUUID(), // unique id
+          algorithm: algorithm, // from your useState
+          result: activeRun,   // whatever your result is
+          createdAt: new Date().toISOString(),
+        });
 
       setActiveRun({
         status: "completed",
@@ -678,6 +710,33 @@ const runBenchmark = async () => {
 
     setProgress(currentProgress);
   }, 1200);
+  const newRun = {
+  id: crypto.randomUUID(),
+  timestamp: new Date().toISOString(),
+  metrics,
+};
+
+// ✅ Save to storage
+// saveRun(selectedDatasetId, newRun);
+  saveRun(datasetId, {
+  id: crypto.randomUUID(),
+  algorithm: algorithm,
+  result: activeRun,
+  createdAt: new Date().toISOString(),
+});
+
+// ✅ Update UI instantly (no refresh needed)
+// setRecentResults(prev => [
+//   {
+//     id: newRun.id,
+//     dataset: selectedDatasetId,
+//     algorithm: selectedDatasetId,
+//     auroc: metrics.auroc,
+//     auprc: metrics.auprc,
+//     createdAt: newRun.timestamp,
+//   },
+//   ...prev, // newest first
+// ]);
 };
 
 
@@ -843,12 +902,13 @@ async function handleDownloadGroundTruth() {
               value={selectedDatasetId}
              
               onValueChange={(value) => {
+                setAlgorithm(value);
                 setSelectedDatasetId(value);
-                setSelectedAlgorithms(
-                  e.target.checked
-                    ? [...selectedAlgorithms, e.target.value]
-                    : selectedAlgorithms.filter(a => a !== e.target.value)
-                )
+                // setSelectedAlgorithms(
+                //   e.target.checked
+                //     ? [...selectedAlgorithms, e.target.value]
+                //     : selectedAlgorithms.filter(a => a !== e.target.value)
+                // )
                 // setSelectedNodeInfo(null);
               }}
             >
@@ -1156,7 +1216,7 @@ async function handleDownloadGroundTruth() {
           Compare Algorithms on this Dataset
         </Button2>
 
-        <Button2 variant="secondary" onClick={() => navigate(`/dashboard/recent`)}>
+        <Button2 variant="secondary" onClick={() => navigate(`/upload/recent`)}>
           View All Runs
         </Button2>
 

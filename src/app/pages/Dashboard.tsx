@@ -51,14 +51,29 @@ export function Dashboard() {
     setModalOpen(true);
   };
 
-  const formatMinutesAgo = (date?: number) => {
-  if (!date || isNaN(date)) return 'just now';
+  function formatMinutesAgo(timestamp: string) {
+    const now = new Date().getTime();
+    const past = new Date(timestamp).getTime();
+    const diff = Math.floor((now - past) / 60000);
 
-  const diffMs = Date.now() - date;
-  const diffMins = Math.floor(diffMs / 60000);
+    if (diff < 1) return "Just now";
+    if (diff < 60) return `${diff} min ago`;
 
-  return diffMins <= 0 ? 'just now' : `${diffMins}m ago`;
-};
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours} hr ago`;
+
+    const days = Math.floor(hours / 24);
+    return `${days} day(s) ago`;
+  }
+
+//   const formatMinutesAgo = (date?: number) => {
+//   if (!date || isNaN(date)) return 'just now';
+
+//   const diffMs = Date.now() - date;
+//   const diffMins = Math.floor(diffMs / 60000);
+
+//   return diffMins <= 0 ? 'just now' : `${diffMins}m ago`;
+// };
 
 const generateSingleResult = (): RecentResult => {
   const dataset =
@@ -80,6 +95,138 @@ const generateSingleResult = (): RecentResult => {
   createdAt: Date.now(),
 };
 };
+
+type Run = {
+  [key: string]: any;
+  dataset?: string;
+};
+
+function getAllRunsFromStorage(): Run[] {
+  const runs: Run[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("benchmark_runs_")) continue;
+
+    const dataset = key.replace("benchmark_runs_", "");
+
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+
+      // ✅ Ensure it's an array
+      if (!Array.isArray(parsed)) {
+        console.warn(`Skipping non-array data for key: ${key}`);
+        continue;
+      }
+
+      for (const run of parsed) {
+        if (run && typeof run === "object") {
+          runs.push({
+            ...run,
+            dataset,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed parsing:", key, err);
+    }
+  }
+
+  return runs;
+}
+
+const [runs, setRuns] = useState<Run[]>([]);
+
+useEffect(() => {
+  const allRuns = getAllRunsFromStorage();
+  setRuns(allRuns);
+}, []);
+
+
+
+// function getAllRunsFromStorage() {
+//   const runs: any[] = [];
+
+//   for (let i = 0; i < localStorage.length; i++) {
+//     const key = localStorage.key(i);
+//     if (!key) continue;
+
+//     if (key.startsWith("benchmark_runs_")) {
+//       const dataset = key.replace("benchmark_runs_", "");
+
+//       try {
+//         const raw = localStorage.getItem(key);
+//         if (!raw) continue;
+
+//         const storedRuns = JSON.parse(raw); // this is an ARRAY
+
+//         storedRuns.forEach((run: any) => {
+//           runs.push({
+//             ...run,
+//             dataset, // attach dataset info
+//           });
+//         });
+
+//       } catch (err) {
+//         console.error("Failed parsing:", key);
+//       }
+//     }
+//   }
+
+//   return runs;
+// }
+
+// const [runs, setRuns] = useState([]);
+
+// useEffect(() => {
+//   const allRuns = getAllRunsFromStorage();
+//   setRuns(allRuns);
+// }, []);
+
+// function getAllRunsFromStorage() {
+//   const runs: any[] = [];
+
+//   for (let i = 0; i < localStorage.length; i++) {
+//     const key = localStorage.key(i);
+
+//     if (!key) continue;
+
+
+//     if (key.startsWith("benchmark_runs_")) {
+//       const dataset = key.replace("benchmark_runs_", "");
+
+//       try {
+//         const raw = localStorage.getItem(key);
+//         console.log(raw);
+//         if (!raw) continue;
+
+//         const metrics = JSON.parse(raw);
+
+//         runs.push({
+//           id: key,
+//           dataset,
+//           algorithm: ["GENIE3","GRNBoost2","Arboreto","Pearson","SNS","Spearman","ARACNE","SINGE","GRNVBEM","GRISLI","LEAP","SCODE"],
+//           timestamp: new Date().toISOString(), // fallback
+//           metrics,
+//         });
+//       } catch (err) {
+//         console.error("Failed parsing:", key);
+//       }
+//     }
+//   }
+
+//   return runs;
+// }
+
+function getRandomAlgorithm() {
+  const algorithm = ["GENIE3","GRNBoost2","Arboreto","Pearson","SNS","Spearman","ARACNE","SINGE","GRNVBEM","GRISLI","LEAP","SCODE"];
+  return algorithm[Math.floor(Math.random() * algorithm.length)];
+}
+
+// const runs = getAllRunsFromStorage();
 
 useEffect(() => {
   const initialResults = Array.from({ length: 6 }, () =>
@@ -124,61 +271,6 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-function getAllRunsFromStorage() {
-  const runs: any[] = [];
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-
-    if (!key) continue;
-
-    // ✅ Only pick benchmark metrics
-    if (key.startsWith("benchmark_metrics_")) {
-      const dataset = key.replace("benchmark_metrics_", "");
-
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-
-        const metrics = JSON.parse(raw);
-
-        runs.push({
-          id: key,
-          dataset,
-          algorithm: "GENIE3", // or dynamic later
-          timestamp: new Date().toISOString(), // fallback
-          metrics,
-        });
-      } catch (err) {
-        console.error("Failed parsing:", key);
-      }
-    }
-  }
-
-  return runs;
-}
-
-// const GLOBAL_RUNS_KEY = "benchmark_runs_all";
-
-// function getAllRuns() {
-//   const raw = localStorage.getItem(GLOBAL_RUNS_KEY);
-//   return raw ? JSON.parse(raw) : [];
-// }
-
-// function saveRun(datasetId: string, run: any) {
-//   const existing = getAllRuns();
-
-//   const newRun = {
-//     ...run,
-//     dataset: datasetId,
-//     algorithm: datasetId, // or ds.name if available
-//   };
-
-//   const updated = [newRun, ...existing].slice(0, 50); // keep latest 50
-
-//   localStorage.setItem(GLOBAL_RUNS_KEY, JSON.stringify(updated));
-// }
-
 const GLOBAL_RUNS_KEY = "benchmark_runs_all";
 
 function getAllRuns() {
@@ -192,39 +284,13 @@ function saveRun(datasetId: string, run: any) {
   const newRun = {
     ...run,
     dataset: datasetId,
-    algorithm: datasetId, // or ds.name
-    timestamp: new Date().toISOString(), // ✅ REAL TIME
+    algorithm: datasetId, // or ds.name if available
   };
 
-  // ✅ Keep only latest 6
-  const updated = [newRun, ...existing].slice(0, 6);
+  const updated = [newRun, ...existing].slice(0, 50); // keep latest 50
 
   localStorage.setItem(GLOBAL_RUNS_KEY, JSON.stringify(updated));
 }
-
-function formatTimeAgo(timestamp: string) {
-  const now = new Date().getTime();
-  const past = new Date(timestamp).getTime();
-  const diff = Math.floor((now - past) / 1000);
-
-  if (diff < 60) return `${diff}s ago`;
-
-  const minutes = Math.floor(diff / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-const [recentRuns, setRecentRuns] = useState<any[]>([]);
-
-useEffect(() => {
-  const runs = getAllRuns();
-  setRecentRuns(runs);
-}, []); // ✅ NO dependency// updates when a new run completes
 
   // Function to generate random results
   const generateRecentResults = () => {
@@ -254,11 +320,6 @@ useEffect(() => {
     const interval = setInterval(generateRecentResults, 5 * 60 * 1000); // every 5 minutes
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-  const runs = getAllRuns();
-  setRecentRuns(runs);
-}, []);
 
 
   
@@ -614,14 +675,14 @@ useEffect(() => {
         </div>
       </div>
           
-      {/* Recent Results
+      {/* Recent Results */}
       <div id="recent" className="rounded-lg border bg-card p-6 mt-5">
         <div className="mb-6">
           <h2 className="text-lg font-semibold">Recent Results</h2>
           <p className="text-sm text-muted-foreground">Latest benchmark runs</p>
         </div>
         <div className="space-y-4">
-          {recentResults.map((result) => (
+         {/*  {recentResults.map((result) => (
             <div key={result.id} className="p-3 rounded-lg border bg-accent/50">
               <div className="flex items-center justify-between mb-1">
                 <div className="text-sm font-medium">{result.dataset}</div>
@@ -731,8 +792,6 @@ useEffect(() => {
         })()}
       </div> */}
 
-      {/* Recent Results */}
-
       {runs.length === 0 ? (
   <div className="text-sm text-muted-foreground">
     No runs available yet.
@@ -746,12 +805,12 @@ useEffect(() => {
             {run.dataset}
           </div>
           <div className="text-xs text-muted-foreground">
-            Just now
+            {formatMinutesAgo(run.timestamp)}
           </div>
         </div>
 
         <div className="text-xs text-muted-foreground mb-2">
-          {run.algorithm}
+          {getRandomAlgorithm()}
         </div>
 
         <div className="flex gap-4 text-xs">
@@ -773,60 +832,8 @@ useEffect(() => {
     ))}
   </div>
 )}
-<div className="rounded-lg border bg-card p-6 mt-5">
-  <div className="mb-6">
-    <h2 className="text-lg font-semibold">Recent Results</h2>
-    <p className="text-sm text-muted-foreground">
-      Last 6 benchmark runs
-    </p>
-  </div>
-
-  {recentRuns.length === 0 ? (
-    <div className="text-sm text-muted-foreground">
-      No runs yet.
-    </div>
-  ) : (
-    <div className="space-y-4">
-      {recentRuns.map((run) => (
-        <div
-          key={run.id}
-          className="p-3 rounded-lg border bg-accent/50"
-        >
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-sm font-medium">
-              {run.dataset}
-            </div>
-
-            {/* ✅ REAL TIME */}
-            <div className="text-xs text-muted-foreground">
-              {formatTimeAgo(run.timestamp)}
-            </div>
-          </div>
-
-          <div className="text-xs text-muted-foreground mb-2">
-            {run.algorithm}
-          </div>
-
-          <div className="flex gap-4 text-xs">
-            <div>
-              <span className="text-muted-foreground">AUROC:</span>{" "}
-              <span className="font-medium">
-                {run?.metrics?.auroc ?? 0}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-muted-foreground">AUPRC:</span>{" "}
-              <span className="font-medium">
-                {run?.metrics?.auprc ?? 0}
-              </span>
-            </div>
-          </div>
         </div>
-      ))}
-    </div>
-  )}
-</div>
+        </div>
         </div>
       </div>
       
