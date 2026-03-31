@@ -14,4 +14,4 @@ export interface DatasetMeta {
   edgesFile?: string;
 }
 
-export const datasets: DatasetMeta[] = [ ... ];
+export const datasets: DatasetMeta[] = [];

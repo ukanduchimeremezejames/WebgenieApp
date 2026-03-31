@@ -6,6 +6,8 @@ import { Database, Eye, Download } from 'lucide-react';
 import { Dataset } from '../types';
 import { Line, LineChart, ResponsiveContainer } from 'recharts';
 
+const API_BASE = "https://ukandu-webgenie-api.hf.space";
+
 interface DatasetCardProps {
   dataset: Dataset;
   onViewDetails: (dataset: Dataset) => void;

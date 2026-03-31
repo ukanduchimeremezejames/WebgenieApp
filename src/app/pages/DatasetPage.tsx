@@ -3,12 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Badge2 } from './Badge';
 import { Button2 } from './Button';
 import { MetricCard } from './MetricCard';
-import { generateMockInferenceData } from '.././components/mockData';
+import { InferenceData } from '../components/Data';
 import { PerformanceChart } from "./../components/PerformanceChart";
 import { RocCurve } from "./../components/RocCurve";
 import { PrCurve } from "./../components/PrCurve";
 
-import { generateDeterministicMetrics, getAllDatasetMetrics } from "./../../utils/generateDeterministicMetrics";
+import { DeterministicMetrics, getAllDatasetMetrics } from "./../../utils/DeterministicMetrics";
 
 import { 
   Download, Activity, FileText, TrendingUp, ArrowLeft 
@@ -19,6 +19,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { datasets } from "../../data/datasets";
 
 const allDatasets = [
   // -------------------------
@@ -238,6 +239,95 @@ const allDatasets = [
   },
 ];
 
+const API_BASE = "https://ukandu-webgenie_api-datasets.hf.space";
+
+export function useBenchmarkRunner() {
+  const [runId, setRunId] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "queued" | "running" | "completed">("idle");
+  const [progress, setProgress] = useState(0);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+
+  const startRun = async (datasetId: string, algorithms: string[]) => {
+    setError(null);
+    setStatus("queued");
+    setProgress(0);
+
+    try {
+      const res = await fetch(`${API_BASE}/runs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dataset: datasetId,
+          algorithms,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to start run");
+
+      const data = await res.json();
+
+      setRunId(data.run_id);
+
+      pollRun(data.run_id);
+
+    } catch (err: any) {
+      setError(err.message);
+      setStatus("idle");
+    }
+  };
+
+
+  const pollRun = (id: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/runs/${id}`);
+        const data = await res.json();
+
+        setStatus(data.status);
+        setProgress(data.progress);
+
+        if (data.status === "completed") {
+          clearInterval(interval);
+
+          const metricsRes = await fetch(`${API_BASE}/runs/${id}/metrics`);
+          const metricsData = await metricsRes.json();
+
+          setMetrics(metricsData);
+          setStatus("completed");
+        }
+
+      } catch (err) {
+        clearInterval(interval);
+        setError("Polling failed");
+      }
+    }, 2000);
+  };
+
+  return {
+    startRun,
+    runId,
+    status,
+    progress,
+    metrics,
+    error,
+  };
+}
+
+const downloadGroundTruth = async () => {
+  const res = await fetch(`${API_BASE}/datasets/${datasets[0].id}/ground-truth`);
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${datasets[0].id}_ground_truth.csv`;
+  a.click();
+};
 
 const metricsByDataset = getAllDatasetMetrics();
 
@@ -272,7 +362,7 @@ function boundedRandom([min, max]: [number, number]) {
   return +(min + Math.random() * (max - min)).toFixed(3);
 }
 
-function generateRunMetrics(datasetId: string) {
+function RunMetrics(datasetId: string) {
   const profile = DATASET_PROFILES[datasetId];
 
   return {
@@ -302,7 +392,7 @@ function scoreColor(score: number) {
 }
 
 
-function generateExpressionDistribution(genes: number) {
+function ExpressionDistribution(genes: number) {
   const bins = Array.from({ length: 20 }, (_, i) => ({
     range: `${i}`,
     count: Math.round(
@@ -450,7 +540,7 @@ const datasetsArray = [
   // other datasets if needed
 ];
 
-const mockAlgorithms = [
+const Algorithms = [
   {
     id: 'alg1',
     name: 'GENIE3',
@@ -561,19 +651,19 @@ const mockAlgorithms = [
   }
 ];
 
-const selectedAlgorithm = mockAlgorithms.find(
+const selectedAlgorithm = Algorithms.find(
   (a) => a.id === selectedAlgorithms[0]
 );
 
 const [selectedDatasetId, setSelectedDatasetId] = useState("GENIE3");
 
 const selectedDataset = useMemo(() => {
-  return mockAlgorithms.find(d => d.id === selectedDatasetId);
+  return Algorithms.find(d => d.id === selectedDatasetId);
 }, [selectedDatasetId]);
 
 const inferenceData = useMemo(() => {
   if (!selectedDataset) return null; // or [] depending on return type
-  return generateMockInferenceData(selectedDataset);
+  return InferenceData(selectedDataset);
 }, [selectedDataset]);
 
 const [isSimulating, setIsSimulating] = useState(false);
@@ -590,7 +680,7 @@ const [activeRun, setActiveRun] = useState<{
   };
 } | null>(null);
 
-function generateFakeMetrics(ds: any) {
+function FakeMetrics(ds: any) {
   return {
     auroc: +(0.72 + Math.random() * 0.18).toFixed(3),
     auprc: +(0.25 + Math.random() * 0.35).toFixed(3),
@@ -661,7 +751,7 @@ const runBenchmark = async () => {
     if (currentProgress >= 100) {
       clearInterval(interval);
 
-      const metrics = generateFakeMetrics(ds);
+      const metrics = FakeMetrics(ds);
 
       const newRun = {
         id: crypto.randomUUID(),
@@ -717,7 +807,7 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 
-  const fallback = generateDeterministicMetrics(datasetId);
+  const fallback = DeterministicMetrics(datasetId);
   setMetrics(fallback);
 }, [runId, isRunning]);
 
@@ -871,7 +961,7 @@ async function handleDownloadGroundTruth() {
 </SelectTrigger>
 
   <SelectContent>
-    {mockAlgorithms.map((algorithm) => (
+    {Algorithms.map((algorithm) => (
       <SelectItem key={algorithm.id} value={algorithm.id}>
         <strong>{algorithm.name}</strong> |{" "}
         <em>{algorithm.category}</em>
@@ -899,7 +989,7 @@ async function handleDownloadGroundTruth() {
               </SelectTrigger>
     
               <SelectContent>
-                {mockAlgorithms.map((algorithm) => (
+                {Algorithms.map((algorithm) => (
                   <SelectItem key={algorithm.id} value={algorithm.id}>
                     <strong>{algorithm.name}</strong>| <em>{algorithm.category}</em>
                   </SelectItem>
@@ -1069,7 +1159,7 @@ async function handleDownloadGroundTruth() {
             <div className="p-4 rounded-lg border border-orange-100 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-700">
               <p className="text-xs text-orange-600 dark:text-orange-300 mb-1">Version</p>
               <p className="text-card-foreground">v1.0.{Math.floor(Math.random() * 9)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Autogenerated</p>
+              <p className="text-xs text-muted-foreground mt-1">Autod</p>
             </div>
           </div>
         </div>
@@ -1163,7 +1253,7 @@ async function handleDownloadGroundTruth() {
       {/* Quality Metrics — placeholder dynamic */}
       <div className="bg-card rounded-lg p-6 border border-border mb-8">
         <h3 className="text-card-foreground mb-1 font-semibold">Quality Control Metrics</h3>
-        <p className="text-muted-foreground text-sm mb-6">Autogenerated QC metrics</p>
+        <p className="text-muted-foreground text-sm mb-6">Autod QC metrics</p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 

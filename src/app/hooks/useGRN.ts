@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const MOCK_EDGES = [
+const EDGES = [
   {
     edge_id: "SOX2__NANOG",
     source: "SOX2",
@@ -112,26 +112,11 @@ export function useGRN(jobId: string) {
   const [edges, setEdges] = useState([]);
   const [loading, setLoading] = useState(true);
 
-//   useEffect(() => {
-//     fetch(`/api/grn/${jobId}`)
-//       .then(res => res.json())
-//       .then(data => {
-//         setEdges(data);
-//         setLoading(false);
-//       });
-//   }, [jobId]);
-
-// useEffect(() => {
-//   setLoading(true);
-//   setEdges(MOCK_EDGES);
-//   setLoading(false);
-// }, [jobId]);
-
 useEffect(() => {
   setLoading(true);
 
   const timer = setTimeout(() => {
-    setEdges(MOCK_EDGES);
+    setEdges(EDGES);
     setLoading(false);
   }, 500); // fake 500ms fetch
 

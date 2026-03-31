@@ -1,12 +1,12 @@
 // import { FileDown, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Checkbox } from '../components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Download, FileDown, X, Activity } from 'lucide-react';
-import { mockAlgorithms, mockPerformanceMetrics, getPRCurveData, getROCCurveData } from '.././components/mockData';
+import { Algorithms, PerformanceMetrics, getPRCurveData, getROCCurveData } from '.././components/Data';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import autoTable from "jspdf-autotable";
@@ -22,6 +22,64 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+
+const API_BASE = "https://ukandu-webgenie_api-compare.hf.space";
+
+export function useComparisonAPI(selectedAlgorithms: string[]) {
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [rocData, setRocData] = useState<any[]>([]);
+  const [prData, setPrData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchComparison = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/compare`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          algorithms: selectedAlgorithms,
+          dataset: "hESC",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setMetrics(data.metrics);
+      setRocData(data.roc_curve);
+      setPrData(data.pr_curve);
+
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedAlgorithms.length > 0) {
+      fetchComparison();
+    }
+  }, [selectedAlgorithms]);
+
+  return {
+    metrics,
+    rocData,
+    prData,
+    loading,
+    error,
+    refetch: fetchComparison,
+  };
+}
 
 const downloadRocGraph = async () => {
   const chartContainer = document.querySelector('.roc-chart-container .recharts-wrapper');
@@ -285,6 +343,7 @@ const prevDataset = () => {
 const motifEnrichmentData = datasets[currentIndex].data;
 
 
+
   const [selectedAlgorithms, setSelectedAlgorithms] = useState<string[]>(['alg1', 'alg4', 'alg6', 'alg7', 'alg9', 'alg12']);
 
   const toggleAlgorithm = (algId: string) => {
@@ -296,14 +355,14 @@ const motifEnrichmentData = datasets[currentIndex].data;
   };
 
   const selectAll = () => {
-    setSelectedAlgorithms(mockAlgorithms.map(a => a.id));
+    setSelectedAlgorithms(Algorithms.map(a => a.id));
   };
 
   const deselectAll = () => {
     setSelectedAlgorithms([]);
   };
 
-  const selectedMetrics = mockPerformanceMetrics.filter(m =>
+  const selectedMetrics = PerformanceMetrics.filter(m =>
     selectedAlgorithms.includes(m.algorithmId)
   );
 
@@ -328,6 +387,22 @@ const motifEnrichmentData = datasets[currentIndex].data;
     });
     return point;
   });
+
+  const {
+  metrics: selected_Metrics,
+  roc_Data,
+  pr_Data,
+  loading,
+  error,
+} = useComparisonAPI(selectedAlgorithms);
+
+useEffect(() => {
+  const timeout = setTimeout(() => {
+    if (selectedAlgorithms.length > 0) fetchComparison();
+  }, 300);
+
+  return () => clearTimeout(timeout);
+}, [selectedAlgorithms]);
 
   return (
     <div id="compare" className="min-h-screen py-20 pb-0">
@@ -374,7 +449,7 @@ const motifEnrichmentData = datasets[currentIndex].data;
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mockAlgorithms.map(algorithm => (
+            {Algorithms.map(algorithm => (
               <div
                 key={algorithm.id}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -501,7 +576,7 @@ const motifEnrichmentData = datasets[currentIndex].data;
                   />
                   <Legend />
                   {selectedAlgorithms.map((algId, idx) => {
-                    const alg = mockAlgorithms.find(a => a.id === algId);
+                    const alg = Algorithms.find(a => a.id === algId);
                     return (
                       <Line
                         key={algId}
@@ -550,7 +625,7 @@ const motifEnrichmentData = datasets[currentIndex].data;
                   />
                   <Legend />
                   {selectedAlgorithms.map((algId, idx) => {
-                    const alg = mockAlgorithms.find(a => a.id === algId);
+                    const alg = Algorithms.find(a => a.id === algId);
                     return (
                       <Line
                         key={algId}
@@ -735,6 +810,9 @@ const motifEnrichmentData = datasets[currentIndex].data;
           </div>
         </div>
       </div>
+
+      {loading && <p>Loading comparison...</p>}
+      {error && <p className="text-red-500">{}</p>}
 
       {/* Footer */}
       <footer className="border-t bg-background mt-12">

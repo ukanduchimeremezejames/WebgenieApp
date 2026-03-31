@@ -1,7 +1,209 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Upload as UploadIcon, FileText, CheckCircle, Clock, AlertCircle, Download, Activity } from 'lucide-react';
-import { mockDatasets } from "../components/mockData";
+import { Datasets } from "../components/Data";
+import { useUploadDataset, useDatasets } from "../apiHooks";
+
+const API_BASE = "https://ukandu-webgenie_api-runs.hf.space";
+const REQUIRED_COLUMNS = ["gene", "target", "weight"];
+
+export function useUploadPipeline() {
+  // Uploaded file
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  // Dataset list (from backend + local uploads)
+  const { data: availableDatasets, loading: datasetsLoading } = useDatasets();
+  const [localDatasets, setLocalDatasets] = useState<any[]>([]);
+
+  // Tracks the uploaded dataset ID
+  const [uploadedDataset, setUploadedDataset] = useState<string | null>(null);
+
+  // Job config state
+  const [jobConfig, setJobConfig] = useState({
+    dataset: "",
+    algorithm: "",
+    algorithmVersion: "",
+    runName: "",
+    evalOptions: {
+      prroc: true,
+      earlyPrecision: true,
+      motif: false,
+    },
+  });
+
+  // Pipeline step
+  const [pipelineStep, setPipelineStep] = useState<"upload" | "validation" | "analysis" | "comparison">("upload");
+
+ 
+  const [runsHistory, setRunsHistory] = useState<any[]>([]);
+
+  const isJobValid =
+    jobConfig.dataset &&
+    jobConfig.dataset.trim() !== "" &&
+    jobConfig.algorithm &&
+    jobConfig.algorithm.trim() !== "";
+
+  // Upload dataset hook (calls API)
+  const { upload: apiUploadDataset, loading: uploadLoading } = useUploadDataset();
+
+  // Combined datasets (backend + local)
+  const datasets = [...(availableDatasets || []), ...localDatasets];
+
+  // File validation
+  const validateDatasetFile = (file: File): Promise<{ valid: boolean; message?: string }> => {
+    return new Promise((resolve) => {
+      if (!file.name.endsWith(".csv")) {
+        resolve({ valid: false, message: "Only CSV files are allowed." });
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        if (!text) {
+          resolve({ valid: false, message: "File is empty." });
+          return;
+        }
+
+        const rows = text.trim().split("\n");
+        if (rows.length < 2) {
+          resolve({ valid: false, message: "Dataset must contain at least one data row." });
+          return;
+        }
+
+        const headers = rows[0].split(",").map((h) => h.trim().toLowerCase());
+
+        const missingColumns = REQUIRED_COLUMNS.filter((col) => !headers.includes(col));
+        if (missingColumns.length > 0) {
+          resolve({
+            valid: false,
+            message: `Missing required columns: ${missingColumns.join(", ")}`,
+          });
+          return;
+        }
+
+        for (let i = 1; i < rows.length; i++) {
+          const cols = rows[i].split(",");
+          if (cols.length !== headers.length) {
+            resolve({ valid: false, message: `Row ${i + 1} has incorrect column count.` });
+            return;
+          }
+
+          const weightIndex = headers.indexOf("weight");
+          const weightValue = parseFloat(cols[weightIndex]);
+
+          if (isNaN(weightValue)) {
+            resolve({
+              valid: false,
+              message: `Invalid numeric value in row ${i + 1} (weight must be numeric).`,
+            });
+            return;
+          }
+        }
+
+        resolve({ valid: true });
+      };
+
+      reader.readAsText(file);
+    });
+  };
+
+  // Handle file selection
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    const validation = await validateDatasetFile(file);
+
+    if (!validation.valid) {
+      alert("Dataset validation failed: " + validation.message);
+      return;
+    }
+
+    setUploadedFile(file);
+
+    // Upload to backend
+    const result = await apiUploadDataset(file);
+    if (result?.id) {
+      handleUploadSuccess(result.id, file.name);
+      setPipelineStep("validation");
+    }
+  };
+
+  // On successful upload
+  const handleUploadSuccess = (datasetId: string, fileName: string) => {
+    const newDataset = {
+      id: datasetId,
+      name: fileName,
+      organism: "User",
+      type: "Custom Dataset",
+      genes: 0,
+      cells: 0,
+      edges: 0,
+      source: "uploaded",
+      lastUpdated: new Date().toISOString(),
+      sparklineData: [],
+    };
+
+    setLocalDatasets((prev) => [...prev, newDataset]);
+    setUploadedDataset(datasetId);
+
+    setJobConfig((prev) => ({
+      ...prev,
+      dataset: datasetId,
+    }));
+  };
+
+  // Download template CSV
+  const downloadTemplate = () => {
+    const csvContent = `gene,target,weight
+GATA1,TAL1,0.92
+RUNX1,MYB,0.87
+...`;
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dataset_template.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  // Move to analysis step
+  const handleValidateAndContinue = () => {
+    if (!uploadedDataset) {
+      alert("Please upload and validate a dataset first.");
+      return;
+    }
+
+    setPipelineStep("analysis");
+    alert("Dataset validated. Proceeding to Job Configuration step.");
+  };
+
+  return {
+    datasets,
+    availableDatasets,
+    localDatasets,
+    uploadedFile,
+    uploadedDataset,
+    jobConfig,
+    setJobConfig,
+    pipelineStep,
+    setPipelineStep,
+    handleFileUpload,
+    handleUploadSuccess,
+    handleValidateAndContinue,
+    downloadTemplate,
+    isJobValid,
+    datasetsLoading,
+    uploadLoading,
+    runsHistory,
+    setRunsHistory,
+  };
+}
 
 const dynamicSteps = [
   { label: "Upload", key: "upload", icon: UploadIcon },
@@ -18,7 +220,7 @@ const pipelineSteps = [
 ];
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomChoice = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const generateJobId = () => `JOB-${String(randomInt(1, 999)).padStart(3, '0')}`;
+const JobId = () => `JOB-${String(randomInt(1, 999)).padStart(3, '0')}`;
 
 // Sample options
 const jobNames = ['GENIE3_predictions', 'custom_run_v2', 'test_predictions', 'run_XYZ', 'analysis_A'];
@@ -27,9 +229,9 @@ const algorithms = ['GENIE3', 'SINCERITIES', 'SCENIC', 'PIDC', 'GRNBoost2'];
 const statuses = ['completed', 'failed', 'queued'];
 const timestamps = ['5d ago', '3d ago', '2w ago', '5h ago', '1d ago'];
 
-// Function to generate 5 random jobs
-const generateJobs = () => Array.from({ length: 5 }, () => ({
-  id: generateJobId(),
+// Function to  5 random jobs
+const Jobs = () => Array.from({ length: 5 }, () => ({
+  id: JobId(),
   name: randomChoice(jobNames),
   dataset: randomChoice(datasets),
   algorithm: randomChoice(algorithms),
@@ -43,7 +245,7 @@ const storedJobs = sessionStorage.getItem('recentJobs');
 if (storedJobs) {
   recentJobs = JSON.parse(storedJobs);
 } else {
-  recentJobs = generateJobs();
+  recentJobs = Jobs();
   sessionStorage.setItem('recentJobs', JSON.stringify(recentJobs));
 }
 
@@ -73,7 +275,7 @@ const handleFileUpload = async (event) => {
   setPipelineStep("validation");
 };
 
-const [availableDatasets, setAvailableDatasets] = useState(mockDatasets);
+const [availableDatasets, setAvailableDatasets] = useState(Datasets);
 
 // Tracks uploaded dataset's ID
 const [uploadedDataset, setUploadedDataset] = useState<string | null>(null);
@@ -446,7 +648,7 @@ const handleValidateAndContinue = () => {
                   <div className="space-y-2">
                     <label className="flex items-center gap-2">
                       <input type="checkbox" defaultChecked className="w-4 h-4 rounded" />
-                      <span className="text-sm">Generate PR/ROC curves</span>
+                      <span className="text-sm"> PR/ROC curves</span>
                     </label>
                     <label className="flex items-center gap-2">
                       <input type="checkbox" defaultChecked className="w-4 h-4 rounded" />
@@ -604,3 +806,38 @@ const handleValidateAndContinue = () => {
     </div>
   );
 }
+
+
+
+
+
+// import { useUploadPipeline } from "../hooks/useUploadPipeline";
+
+// export function Upload() {
+//   const {
+//     datasets,
+//     pipelineStep,
+//     handleFileUpload,
+//     handleValidateAndContinue,
+//     downloadTemplate,
+//   } = useUploadPipeline();
+
+//   return (
+//     <div>
+//       <h2>Upload Dataset</h2>
+//       {pipelineStep === "upload" && (
+//         <>
+//           <input type="file" accept=".csv" onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])} />
+//           <button onClick={downloadTemplate}>Download Template</button>
+//         </>
+//       )}
+
+//       {pipelineStep === "validation" && (
+//         <>
+//           <p>Dataset uploaded and validated</p>
+//           <button onClick={handleValidateAndContinue}>Proceed to Analysis</button>
+//         </>
+//       )}
+//     </div>
+//   );
+// }

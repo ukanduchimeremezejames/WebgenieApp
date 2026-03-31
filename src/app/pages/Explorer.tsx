@@ -17,10 +17,10 @@ import dynCY from "../../data/beeline/synthetic/dyn-CY.json";
 import dynLI from "../../data/beeline/synthetic/dyn-LI.json";
 import dynLL from "../../data/beeline/synthetic/dyn-LL.json";
 import dynTF from "../../data/beeline/synthetic/dyn-TF.json";
-import { buildBeelineDataset, BeelineNode } from "../../utils/buildBeelineDataset";
+import { BeelineDataset, BeelineNode } from "../../utils/BeelineDataset";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
-import { generateMockInferenceData } from '.././components/mockData';
+import { Algorithms, InferenceData } from '../components/Data';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape from 'cytoscape';
 import graphML from 'cytoscape-graphml';
@@ -28,22 +28,26 @@ import { saveAs } from "file-saver";
 import popper from "cytoscape-popper";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
+import { datasets } from '../../data/datasets';
 
 cytoscape.use(popper);
+
+const API_BASE = "https://ukandu-webgenie_api-explorer.hf.space";
+
 
 const TOOLTIP_TEXT =
   "Edge score = raw confidence value produced by the inference algorithm (not normalized).";
 
-const GSDDataset = buildBeelineDataset(GSD);
-const HSCDataset = buildBeelineDataset(HSC);
-const mCADDataset = buildBeelineDataset(mCAD);
-const VSCDataset = buildBeelineDataset(VSC);
-const dynBFCDataset = buildBeelineDataset(dynBFC);
-const dynBFDataset = buildBeelineDataset(dynBF);
-const dynCYDataset = buildBeelineDataset(dynCY);
-const dynLIDataset = buildBeelineDataset(dynLI);
-const dynLLDataset = buildBeelineDataset(dynLL);
-const dynTFDataset = buildBeelineDataset(dynTF);
+const GSDDataset = BeelineDataset(GSD);
+const HSCDataset = BeelineDataset(HSC);
+const mCADDataset = BeelineDataset(mCAD);
+const VSCDataset = BeelineDataset(VSC);
+const dynBFCDataset = BeelineDataset(dynBFC);
+const dynBFDataset = BeelineDataset(dynBF);
+const dynCYDataset = BeelineDataset(dynCY);
+const dynLIDataset = BeelineDataset(dynLI);
+const dynLLDataset = BeelineDataset(dynLL);
+const dynTFDataset = BeelineDataset(dynTF);
 
 const datasetsArray = [
   {
@@ -219,7 +223,6 @@ type AlgoProfile = {
   dynamic?: boolean
   edgeSparsity: number
 }
-
 
 const ALGORITHM_PROFILES: AlgoProfile[] = [
 
@@ -444,6 +447,211 @@ function isAlgorithmCompatible(
 
 console.log("Datasets loaded:", datasetsArray);
 
+export function useDatasets() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API_BASE}/datasets`)
+      .then(res => res.json())
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
+export function useDataset(datasetId: string) {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!datasetId) return;
+
+    fetch(`${API_BASE}/datasets/${datasetId}`)
+      .then(res => res.json())
+      .then(setData);
+  }, [datasetId]);
+
+  return data;
+}
+
+export function useRunInference() {
+  // const [loading, setLoading] = useState(false);
+
+  const run = async (payload: {
+    datasetId: string;
+    algorithm: string;
+  }) => {
+    // setLoading(true);
+
+    const res = await fetch(`${API_BASE}/infer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    // setLoading(false);
+    return data;
+  };
+
+  return { run };
+}
+
+export function useQueue() {
+  const [jobs, setJobs] = useState<any[]>([]);
+
+  const fetchJobs = async () => {
+    const res = await fetch(`${API_BASE}/queue`);
+    const data = await res.json();
+    setJobs(data);
+  };
+
+  useEffect(() => {
+    fetchJobs();
+    const interval = setInterval(fetchJobs, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return { jobs, refresh: fetchJobs };
+}
+
+
+export function useEnqueueJob() {
+  // const [loading, setLoading] = useState(false);
+
+  const enqueue = async (payload: {
+    datasetId: string;
+    algorithm: string;
+  }) => {
+    // setLoading(true);
+
+    const res = await fetch(`${API_BASE}/queue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    // setLoading(false);
+    return data;
+  };
+
+  return { enqueue };
+}
+
+
+export function useJobStatus(jobId: string) {
+  const [job, setJob] = useState<any>(null);
+
+  useEffect(() => {
+    if (!jobId) return;
+
+    const fetchStatus = async () => {
+      const res = await fetch(`${API_BASE}/queue/${jobId}`);
+      const data = await res.json();
+      setJob(data);
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 2000);
+
+    return () => clearInterval(interval);
+  }, [jobId]);
+
+  return job;
+}
+
+
+export function useDownloadResults() {
+  const download = async (jobId: string) => {
+    const res = await fetch(`${API_BASE}/results/${jobId}`);
+    const blob = await res.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `results_${jobId}.json`;
+    a.click();
+  };
+
+  return { download };
+}
+
+
+
+export function useUploadDataset() {
+  const [loading, setLoading] = useState(false);
+
+  const upload = async (file: File) => {
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE}/datasets/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setLoading(false);
+    return data;
+  };
+
+  return { upload, loading };
+}
+
+
+export function useAlgorithms() {
+  const [algos, setAlgos] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/algorithms`)
+      .then(res => res.json())
+      .then(setAlgos);
+  }, []);
+
+  return algos;
+}
+
+
+export function useMetrics() {
+  const [metrics, setMetrics] = useState<any>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/metrics`)
+      .then(res => res.json())
+      .then(setMetrics);
+  }, []);
+
+  return metrics;
+}
+
+
+const { enqueue } = useEnqueueJob();
+const { run } = useRunInference();
+
+const handleRun = async () => {
+  const job = await enqueue({
+    datasetId: datasetsArray[0].id,
+    algorithm: Algorithms[0].name,
+  });
+
+  const result = await run({
+    datasetId: datasetsArray[0].id,
+    algorithm: Algorithms[0].name,
+  });
+
+  console.log(result);
+};
+
+
+
+
 export function Explorer() {
   
   const DEFAULT_FILTERS = {
@@ -526,13 +734,13 @@ if (!edgesWithInference || edgesWithInference.length === 0) {
         return;
       }
 
-      // TF-dependent edges
+    
       if (profile.requiresTFList && !edge.isTFEdge) {
         scores[algoName] = null;
         return;
       }
 
-      // deterministic realistic scoring
+  
       const genePenalty = dataset.meta.nGenes > 15000 ? 0.85 : 1;
       const cellPenalty = dataset.meta.nCells < 200 ? 0.9 : 1;
 
@@ -543,7 +751,7 @@ if (!edgesWithInference || edgesWithInference.length === 0) {
       scores[algoName] = parseFloat(adjusted.toFixed(3));
     });
 
-    // fallback if everything null
+    
     if (!Object.values(scores).some(s => s != null)) {
       const fallback = ALGORITHM_PROFILES.find(a => isAlgorithmCompatible(a, dataset.meta));
       if (fallback) {
@@ -658,7 +866,7 @@ const inferenceData = useMemo(() => {
   isTimeSeries: selectedDataset.isTimeSeries ?? false
 }
   if (!selectedDataset) return null; 
-  return generateMockInferenceData(selectedDataset);
+  return InferenceData(selectedDataset);
 }, [selectedDataset]);
 
 const predictedBestAlgorithm = useMemo(() => {
@@ -825,7 +1033,7 @@ const filteredEdgesWithScores = filteredEdges.map(e => {
   if (!e.scores) {
     return {
       ...e,
-      scores: generateEdgeScores(e.source, e.target, selectedDataset.meta, { isTFEdge: e.isTFEdge })
+      scores: EdgeScores(e.source, e.target, selectedDataset.meta, { isTFEdge: e.isTFEdge })
     }
   }
   return e
@@ -855,7 +1063,7 @@ const datasetMeta: DatasetMeta = {
 
 const scoredEdges = edges.map(edge => ({
   ...edge,
-  scores: generateEdgeScores(edge.source, edge.target, datasetMeta, { isTFEdge: edge.isTFEdge }),
+  scores: EdgeScores(edge.source, edge.target, datasetMeta, { isTFEdge: edge.isTFEdge }),
 }));
 
   return [...nodes, ...edges];
@@ -1271,7 +1479,7 @@ function simpleHash(str: string): number {
 }
 
 
-function generateEdgeScores(
+function EdgeScores(
   source: string,
   target: string,
   datasetMeta?: DatasetMeta & { isSynthetic?: boolean },
@@ -1384,7 +1592,7 @@ function computeNodeMean(scoresList: (number | null)[]) {
 
 const enrichedEdges = selectedDataset.edges.map((e) => ({
   ...e,
-  scores: generateEdgeScores(`${e.source}-${e.target}`, selectedDataset.id)
+  scores: EdgeScores(`${e.source}-${e.target}`, selectedDataset.id)
 }));
 
 
@@ -1556,7 +1764,7 @@ const NeighborBox = ({ title, neighbors }: { title: string; neighbors: string[] 
             WebGenie Explorer operates in multi-algorithm inference mode.
             Multiple GRN inference algorithms are evaluated per node and edge.
             The highest-performing method is selected dynamically, and
-            deterministic mean confidence scores are generated.
+            deterministic mean confidence scores are d.
           </TooltipContent>
         </Tooltip>
 

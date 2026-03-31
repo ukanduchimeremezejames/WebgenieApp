@@ -11,6 +11,9 @@ import fcose from "cytoscape-fcose";
 
 import { datasets } from "../../data/datasets";
 
+const API_BASE = "https://ukandu-webgenie_api-datasets.hf.space";
+
+
 const allDatasets = [
   // -------------------------
   // Curated Ground-Truth GRNs
@@ -231,33 +234,43 @@ const allDatasets = [
 
 
 
+export function useDatasetsAPI(filters: {
+  search: string;
+  organism: string;
+  type: string;
+  source: string;
+}) {
+  const [datasets, setDatasets] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchDatasets = async () => {
+    setLoading(true);
+
+    const res = await fetch(`${API_BASE}/datasets/search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(filters),
+    });
+
+    const data = await res.json();
+
+    setDatasets(data.datasets);
+    setStats(data.stats);
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchDatasets();
+  }, [filters.search, filters.organism, filters.type, filters.source]);
+
+  return { datasets, stats, loading };
+}
 
 export function Datasets() {
-  //   const totalGenes = allDatasets.reduce((sum, d) => sum + d.genes, 0);
-  // const totalCells = allDatasets.reduce((sum, d) => sum + d.cells, 0);
-  // const totalEdges = allDatasets.reduce((sum, d) => sum + d.edges, 0);
-
-  // // Placeholder — update when you have "runs"
-  // const totalRuns = 0;
-
-  
-  // const navigate = useNavigate();
-  // const [searchQuery, setSearchQuery] = useState('');
-  // const [selectedOrganism, setSelectedOrganism] = useState('all');
-  // const [selectedType, setSelectedType] = useState('all');
-  // const [selectedSource, setSelectedSource] = useState('all');
-
-  // const filteredDatasets = allDatasets.filter(dataset => {
-  //   const matchesSearch = dataset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //                        dataset.organism.toLowerCase().includes(searchQuery.toLowerCase());
-  //   const matchesOrganism = selectedOrganism === 'all' || dataset.organism === selectedOrganism;
-  //   const matchesType = selectedType === 'all' || dataset.type === selectedType;
-  //   const matchesSource = selectedSource === 'all' || dataset.source === selectedSource;
-    
-  
-
-  //   return matchesSearch && matchesOrganism && matchesType && matchesSource;
-  // });
 
   const navigate = useNavigate();
 

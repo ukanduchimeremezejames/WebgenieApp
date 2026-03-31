@@ -2,6 +2,9 @@ import { Badge2 } from './Badge';
 import { Button2 } from './Button';
 import { Activity, Download } from 'lucide-react';
 import { ActivityPreview } from './ActivityPreview';
+
+const API_BASE = "https://ukandu-webgenie-api.hf.space";
+
 interface DatasetCardProps {
   name: string;
   organism: string;

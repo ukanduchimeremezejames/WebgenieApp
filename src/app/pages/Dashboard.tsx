@@ -11,8 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { DatasetDetailModal } from '../components/DatasetDetailModal';
 import { Search, ArrowUpDown, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { mockDatasets2, mockAlgorithms, mockJobs, getAUPRCDistributionData, allDatasets } from '../components/mockData';
+import { Datasets2, Algorithms, Jobs, getAUPRCDistributionData, allDatasets } from '../components/Data';
 import { Dataset } from '../types';
+
+
+const API_BASE = "https://ukandu-webgenie_api-dashboard.hf.space";
+
 
 
 type RecentResult = {
@@ -51,6 +55,73 @@ export function Dashboard() {
     setModalOpen(true);
   };
 
+
+function useDashboardAPI(filters: {
+  organism: string;
+  type: string;
+  sizeRange: number[];
+}) {
+  const [recentResults, setRecentResults] = useState<any[]>([]);
+  const [algorithmComparison, setAlgorithmComparison] = useState<any[]>([]);
+  const [kpis, setKpis] = useState<any>({
+    totalRuns: 0,
+    totalDatasets: 0,
+    totalGenes: 0,
+    totalCells: 0,
+    totalEdges: 0,
+  });
+  const [distribution, setDistribution] = useState<any[]>([]);
+  const [datasets, setDatasets] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDashboard = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/dashboard`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(filters),
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch dashboard");
+
+      const data = await res.json();
+
+      setRecentResults(data.recent_results);
+      setAlgorithmComparison(data.algorithm_comparison);
+      setKpis(data.kpis);
+      setDistribution(data.auprc_distribution);
+      setDatasets(data.datasets);
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [filters.organism, filters.type, filters.sizeRange]);
+
+  return {
+    recentResults,
+    algorithmComparison,
+    kpis,
+    distribution,
+    datasets,
+    loading,
+    error,
+    refetch: fetchDashboard,
+  };
+}
+
   function formatMinutesAgo(timestamp: string) {
     const now = new Date().getTime();
     const past = new Date(timestamp).getTime();
@@ -66,21 +137,13 @@ export function Dashboard() {
     return `${days} day(s) ago`;
   }
 
-//   const formatMinutesAgo = (date?: number) => {
-//   if (!date || isNaN(date)) return 'just now';
 
-//   const diffMs = Date.now() - date;
-//   const diffMins = Math.floor(diffMs / 60000);
-
-//   return diffMins <= 0 ? 'just now' : `${diffMins}m ago`;
-// };
-
-const generateSingleResult = (): RecentResult => {
+const SingleResult = (): RecentResult => {
   const dataset =
-    mockDatasets2[Math.floor(Math.random() * mockDatasets2.length)].name;
+    Datasets2[Math.floor(Math.random() * Datasets2.length)].name;
 
   const algorithm =
-    mockAlgorithms[Math.floor(Math.random() * mockAlgorithms.length)].name;
+    Algorithms[Math.floor(Math.random() * Algorithms.length)].name;
 
   const auroc = (Math.random() * 0.2 + 0.6).toFixed(3);
   const auprc = (Math.random() * 0.2 + 0.55).toFixed(3);
@@ -117,7 +180,7 @@ function getAllRunsFromStorage(): Run[] {
 
       const parsed = JSON.parse(raw);
 
-      // ✅ Ensure it's an array
+      
       if (!Array.isArray(parsed)) {
         console.warn(`Skipping non-array data for key: ${key}`);
         continue;
@@ -147,81 +210,6 @@ useEffect(() => {
 }, []);
 
 
-
-// function getAllRunsFromStorage() {
-//   const runs: any[] = [];
-
-//   for (let i = 0; i < localStorage.length; i++) {
-//     const key = localStorage.key(i);
-//     if (!key) continue;
-
-//     if (key.startsWith("benchmark_runs_")) {
-//       const dataset = key.replace("benchmark_runs_", "");
-
-//       try {
-//         const raw = localStorage.getItem(key);
-//         if (!raw) continue;
-
-//         const storedRuns = JSON.parse(raw); // this is an ARRAY
-
-//         storedRuns.forEach((run: any) => {
-//           runs.push({
-//             ...run,
-//             dataset, // attach dataset info
-//           });
-//         });
-
-//       } catch (err) {
-//         console.error("Failed parsing:", key);
-//       }
-//     }
-//   }
-
-//   return runs;
-// }
-
-// const [runs, setRuns] = useState([]);
-
-// useEffect(() => {
-//   const allRuns = getAllRunsFromStorage();
-//   setRuns(allRuns);
-// }, []);
-
-// function getAllRunsFromStorage() {
-//   const runs: any[] = [];
-
-//   for (let i = 0; i < localStorage.length; i++) {
-//     const key = localStorage.key(i);
-
-//     if (!key) continue;
-
-
-//     if (key.startsWith("benchmark_runs_")) {
-//       const dataset = key.replace("benchmark_runs_", "");
-
-//       try {
-//         const raw = localStorage.getItem(key);
-//         console.log(raw);
-//         if (!raw) continue;
-
-//         const metrics = JSON.parse(raw);
-
-//         runs.push({
-//           id: key,
-//           dataset,
-//           algorithm: ["GENIE3","GRNBoost2","Arboreto","Pearson","SNS","Spearman","ARACNE","SINGE","GRNVBEM","GRISLI","LEAP","SCODE"],
-//           timestamp: new Date().toISOString(), // fallback
-//           metrics,
-//         });
-//       } catch (err) {
-//         console.error("Failed parsing:", key);
-//       }
-//     }
-//   }
-
-//   return runs;
-// }
-
 function getRandomAlgorithm() {
   const algorithm = ["GENIE3","GRNBoost2","Arboreto","Pearson","SNS","Spearman","ARACNE","SINGE","GRNVBEM","GRISLI","LEAP","SCODE"];
   return algorithm[Math.floor(Math.random() * algorithm.length)];
@@ -231,7 +219,7 @@ function getRandomAlgorithm() {
 
 useEffect(() => {
   const initialResults = Array.from({ length: 6 }, () =>
-    generateSingleResult()
+    SingleResult()
   );
 
   setRecentResults(initialResults);
@@ -242,12 +230,12 @@ useEffect(() => {
 
   const scheduleNext = () => {
     const randomDelay =
-      (Math.floor(Math.random() * 11) + 5) * 60 * 1000; // 5–15 minutes
+      (Math.floor(Math.random() * 11) + 5) * 60 * 1000;
 
     timeout = setTimeout(() => {
       setRecentResults((prev) => {
         const updated = [
-          generateSingleResult(),
+          SingleResult(),
           ...prev,
         ].slice(0, 6);
 
@@ -285,22 +273,22 @@ function saveRun(datasetId: string, run: any) {
   const newRun = {
     ...run,
     dataset: datasetId,
-    algorithm: datasetId, // or ds.name if available
+    algorithm: datasetId,
   };
 
-  const updated = [newRun, ...existing].slice(0, 50); // keep latest 50
+  const updated = [newRun, ...existing].slice(0, 50);
 
   localStorage.setItem(GLOBAL_RUNS_KEY, JSON.stringify(updated));
 }
 
-  // Function to generate random results
-  const generateRecentResults = () => {
+
+  const RecentResults = () => {
     const results: RecentResult[] = [];
     for (let i = 0; i < 6; i++) {
-      const dataset = mockDatasets2[Math.floor(Math.random() * mockDatasets2.length)].name;
-      const algorithm = mockAlgorithms[Math.floor(Math.random() * mockAlgorithms.length)].name;
-      const auroc = (Math.random() * 0.2 + 0.6).toFixed(3); // AUROC between 0.6-0.8
-      const auprc = (Math.random() * 0.2 + 0.55).toFixed(3); // AUPRC between 0.55-0.75
+      const dataset = Datasets2[Math.floor(Math.random() * Datasets2.length)].name;
+      const algorithm = Algorithms[Math.floor(Math.random() * Algorithms.length)].name;
+      const auroc = (Math.random() * 0.2 + 0.6).toFixed(3);
+      const auprc = (Math.random() * 0.2 + 0.55).toFixed(3);
       const minutesAgo = Math.floor(Math.random() * 59) + 1;
       results.push({
         id: i,
@@ -314,11 +302,10 @@ function saveRun(datasetId: string, run: any) {
     }
     setRecentResults(results);
   };
-
-  // Initialize and refresh every 5 minutes
+  
   useEffect(() => {
-    generateRecentResults(); // initial
-    const interval = setInterval(generateRecentResults, 5 * 60 * 1000); // every 5 minutes
+    RecentResults(); 
+    const interval = setInterval(RecentResults, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -326,13 +313,13 @@ function saveRun(datasetId: string, run: any) {
   
   const [algorithmComparison, setAlgorithmComparison] = useState<AlgorithmMetrics[]>([]);
 
-  // Function to generate random metrics
-  const generateAlgorithmComparison = () => {
-    const results: AlgorithmMetrics[] = mockAlgorithms.map((algo) => {
-      const auroc = Math.random() * 0.2 + 0.6;  // AUROC between 0.6 - 0.8
-      const auprc = Math.random() * 0.2 + 0.55; // AUPRC between 0.55 - 0.75
-      const f1 = Math.min(auroc, auprc) - Math.random() * 0.05; // F1 slightly lower than metrics
-      const runtime = Math.floor(Math.random() * 100 + 20); // Runtime 20-120s
+
+  const AlgorithmComparison = () => {
+    const results: AlgorithmMetrics[] = Algorithms.map((algo) => {
+      const auroc = Math.random() * 0.2 + 0.6;  
+      const auprc = Math.random() * 0.2 + 0.55; 
+      const f1 = Math.min(auroc, auprc) - Math.random() * 0.05; 
+      const runtime = Math.floor(Math.random() * 100 + 20); 
       return {
         algorithm: algo.name,
         auroc,
@@ -344,10 +331,10 @@ function saveRun(datasetId: string, run: any) {
     setAlgorithmComparison(results);
   };
 
-  // Initialize and refresh every 5 minutes
+ 
   useEffect(() => {
-    generateAlgorithmComparison(); // initial
-    const interval = setInterval(generateAlgorithmComparison, 5 * 60 * 1000); // every 5 minutes
+    AlgorithmComparison();
+    const interval = setInterval(AlgorithmComparison, 5 * 60 * 1000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -363,7 +350,7 @@ function saveRun(datasetId: string, run: any) {
   const chartData = getAUPRCDistributionData();
 
   // Filter datasets
-  const filteredDatasets = mockDatasets2.filter(ds => {
+  const filteredDatasets = Datasets2.filter(ds => {
     const matchesOrganism = selectedOrganism === 'all' || ds.organism === selectedOrganism;
     const matchesType = selectedType === 'all' || ds.type === selectedType;
     const matchesSize = ds.genes >= sizeRange[0] && ds.genes <= sizeRange[1];
@@ -393,10 +380,9 @@ useEffect(() => {
   }
 
 
-  // Generate 6 results spaced 3–20 mins apart in the past
   const initialResults = Array.from({ length: 6 }, (_, index) => {
     const minutesAgo = (index + 1) * (Math.floor(Math.random() * 5) + 3);
-    const result = generateSingleResult();
+    const result = SingleResult();
     return {
       ...result,
       createdAt: Date.now() - minutesAgo * 60 * 1000,
@@ -414,7 +400,19 @@ useEffect(() => {
 }, [recentResults]);
 
 
-  
+const {
+  recent_Results,
+  algorithm_Comparison,
+  kpis,
+  distribution,
+  datasets,
+  loading,
+  error,
+} = useDashboardAPI({
+  organism: selectedOrganism,
+  type: selectedType,
+  sizeRange,
+});
 
   return (
     <div id="overview" className="min-h-screen py-20 pb-0">
@@ -439,7 +437,7 @@ useEffect(() => {
         <KPICard
           icon={Cpu}
           title="Total Algorithms"
-          value={mockAlgorithms.length}
+          value={Algorithms.length}
           description="Network inference methods"
           gradient="from-green-50 to-green-100"
         />
@@ -683,116 +681,7 @@ useEffect(() => {
           <p className="text-sm text-muted-foreground">Latest benchmark runs</p>
         </div>
         <div className="space-y-4">
-         {/*  {recentResults.map((result) => (
-            <div key={result.id} className="p-3 rounded-lg border bg-accent/50">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-sm font-medium">{result.dataset}</div>
-                <div className="text-xs text-muted-foreground">{formatMinutesAgo(result.createdAt)}</div>
-              </div>
-              <div className="text-xs text-muted-foreground mb-2">{result.algorithm}</div>
-              <div className="flex gap-4 text-xs">
-                <div>
-                  <span className="text-muted-foreground">AUROC:</span>{' '}
-                  <span className="font-medium">{result.auroc}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">AUPRC:</span>{' '}
-                  <span className="font-medium">{result.auprc}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div> */}
-      {/* Recent Results (from localStorage) */}
-      {/* <div id="recent" className="rounded-lg border bg-card p-6 mt-5">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">Recent Results</h2>
-          <p className="text-sm text-muted-foreground">Latest benchmark runs</p>
-        </div>
-
-        {(() => {
-          try {
-            const raw = localStorage.getItem(`benchmark_runs_${selectedDatasetId}`);
-            const runs = raw ? JSON.parse(raw) : [];
-
-            if (!runs.length) {
-              return (
-                <div className="text-sm text-muted-foreground">
-                  No runs yet. Start a benchmark to see results.
-                </div>
-              );
-            }
-
-            // format + sort latest first
-            const formatted = runs
-              .map((run: any) => ({
-                id: run.id,
-                dataset: "GSD",
-                algorithm: "GENIE3",
-                auroc: run?.metrics?.auroc ?? 0,
-                auprc: run?.metrics?.auprc ?? 0,
-                createdAt: run.timestamp,
-              }))
-              .sort(
-                (a: any, b: any) =>
-                  new Date(b.createdAt).getTime() -
-                  new Date(a.createdAt).getTime()
-              );
-
-            return (
-              <div className="space-y-4">
-                {formatted.map((result: any) => (
-                  <div
-                    key={result.id}
-                    className="p-3 rounded-lg border bg-accent/50"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-sm font-medium">
-                        {result.dataset}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatMinutesAgo(result.createdAt)}
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {result.algorithm}
-                    </div>
-
-                    <div className="flex gap-4 text-xs">
-                      <div>
-                        <span className="text-muted-foreground">AUROC:</span>{" "}
-                        <span className="font-medium">{result.auroc}</span>
-                      </div>
-
-                      <div>
-                        <span className="text-muted-foreground">AUPRC:</span>{" "}
-                        <span className="font-medium">{result.auprc}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          } catch (err) {
-            console.error("Error loading recent runs:", err);
-            return (
-              <div className="text-sm mt-10 text-red-500 text-center">
-                No Runs Yet, try to run a benchmark here:
-                <Button
-                  className="w-full mt-5 bg-primary hover:bg-primary/90"
-                  onClick={() => (window.location.href = `/dataset/GSD`)}
-                >
-                  Run Benchmark
-                </Button>
-
-              </div>
-            );
-          }
-        })()}
-      </div> */}
-
+         
       {runs.length === 0 ? (
   <div className="text-sm text-muted-foreground">
     No runs available yet.
@@ -800,8 +689,9 @@ useEffect(() => {
 ) : (
   <div className="space-y-4">
     {runs
-      .slice()               
-      .reverse()             
+      .slice()
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))               
+      // .reverse()             
       .slice(0, 6)  
       .map((run) => (
       <div key={run.id} className="p-3 rounded-lg border bg-accent/50">

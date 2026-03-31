@@ -5,10 +5,10 @@ function seededRandom(seed: number) {
   return x - Math.floor(x);
 }
 
-export function generateMockInferenceData(dataset: Dataset) {
+export function InferenceData(dataset: Dataset) {
   const algorithms = ["GENIE3", "GRNBoost2", "PIDC", "SCENIC"];
 
-  const geneCount = Math.min(dataset.genes / 100, 40); // scale realistically
+  const geneCount = Math.min(dataset.genes / 100, 40); 
   const edgeCount = Math.min(dataset.edges / 100, 60);
 
   const genes = Array.from({ length: geneCount }, (_, i) => {
@@ -44,7 +44,6 @@ export function generateMockInferenceData(dataset: Dataset) {
       source,
       target,
       type: randomEdgeType(),
-      // type: seededRandom(i + 5) > 0.2 ? "activation" : "repression",
       scores
     });
   }
@@ -88,13 +87,11 @@ export interface Dataset {
   edgesData: Edge[];
 }
 
-// Helper to generate random numbers in a range
 function randomInt1(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Helper to generate mock edges with algorithm scores
-function generateEdges1(nodes: Node[], algorithms: string[]) {
+function Edges1(nodes: Node[], algorithms: string[]) {
   const edgeTypes = ["activation", "repression", "unknown"] as const;
 
 function randomEdgeType() {
@@ -109,7 +106,7 @@ function randomEdgeType() {
   const n = nodes.length;
 
   for (let i = 0; i < n; i++) {
-    const numConnections = randomInt1(2, 4); // each node connects 2–4 others
+    const numConnections = randomInt1(2, 4);
     for (let j = 0; j < numConnections; j++) {
       const targetIdx = randomInt1(0, n - 1);
       if (targetIdx !== i) {
@@ -141,7 +138,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return [...array].sort(() => Math.random() - 0.5);
 }
 
-function generateDataset(
+function Dataset(
   id: string,
   name: string,
   organism: string,
@@ -150,7 +147,6 @@ function generateDataset(
 ) {
   const algorithms = ['algo1', 'algo2', 'algo3'];
 
-  // 🔥 Randomly select unique real gene names
   const shuffledGenes = shuffleArray(geneNames);
 
   const selectedGenes = shuffledGenes.slice(
@@ -159,7 +155,7 @@ function generateDataset(
   );
 
   const nodes: Node[] = selectedGenes.map((gene) => ({
-    id: gene,           // realistic ID
+    id: gene,
     label: gene,
     degree: 0,
     neighbors: [],
@@ -167,12 +163,9 @@ function generateDataset(
     bestMean: 0
   }));
 
-  // Generate edges using real IDs
-  const edgesData = generateEdges1(nodes, algorithms);
+  const edgesData = Edges1(nodes, algorithms);
 
-  // -----------------------------
-  // Compute degree + neighbors + bestAlgo
-  // -----------------------------
+
   nodes.forEach(node => {
 
     const relatedEdges = edgesData.filter(
@@ -219,7 +212,7 @@ function generateDataset(
     cells: randomInt1(300, 800),
     edges: edgesData.length,
     source: 'curated' as const,
-    description: `${name} mock dataset`,
+    description: `${name}  dataset`,
     lastUpdated: new Date().toISOString().split('T')[0],
     sparklineData: Array.from({ length: 10 }, () => randomInt1(20, 100)),
     nodes,
@@ -227,7 +220,7 @@ function generateDataset(
   } as Dataset;
 }
 
-export const mockAlgorithms: Algorithm[] = [
+export const Algorithms: Algorithm[] = [
   {
     id: 'alg1',
     name: 'GENIE3',
@@ -338,19 +331,19 @@ export const mockAlgorithms: Algorithm[] = [
   }
 ];
 
-export const mockDatasets: Dataset[] = [
-  generateDataset('hESC', 'hESC', 'Human', 'scRNA-seq', 25),
-  generateDataset('mDC', 'mDC', 'Mouse', 'scRNA-seq', 22),
-  generateDataset('mESC', 'mESC', 'Mouse', 'scRNA-seq', 28),
-  generateDataset('hHep', 'hHep', 'Human', 'scRNA-seq', 24),
-  generateDataset('VSC', 'VSC', 'Mouse', 'scRNA-seq', 26),
-  generateDataset('hHSPC', 'hHSPC', 'Human', 'scRNA-seq', 30),
-  generateDataset('mHSC-E', 'mHSC-E', 'Mouse', 'scRNA-seq', 27),
-  generateDataset('mHSC-L', 'mHSC-L', 'Mouse', 'scRNA-seq', 23),
-  generateDataset('Synthetic-1', 'Synthetic-1', 'Synthetic', 'scRNA-seq', 25),
-  generateDataset('Synthetic-2', 'Synthetic-2', 'Synthetic', 'scRNA-seq', 24),
-  generateDataset('yeast-1', 'Yeast Network 1', 'Yeast', 'Bulk RNA-seq', 22),
-  generateDataset('yeast-2', 'Yeast Network 2', 'Yeast', 'Bulk RNA-seq', 21),
+export const Datasets: Dataset[] = [
+  Dataset('hESC', 'hESC', 'Human', 'scRNA-seq', 25),
+  Dataset('mDC', 'mDC', 'Mouse', 'scRNA-seq', 22),
+  Dataset('mESC', 'mESC', 'Mouse', 'scRNA-seq', 28),
+  Dataset('hHep', 'hHep', 'Human', 'scRNA-seq', 24),
+  Dataset('VSC', 'VSC', 'Mouse', 'scRNA-seq', 26),
+  Dataset('hHSPC', 'hHSPC', 'Human', 'scRNA-seq', 30),
+  Dataset('mHSC-E', 'mHSC-E', 'Mouse', 'scRNA-seq', 27),
+  Dataset('mHSC-L', 'mHSC-L', 'Mouse', 'scRNA-seq', 23),
+  Dataset('Synthetic-1', 'Synthetic-1', 'Synthetic', 'scRNA-seq', 25),
+  Dataset('Synthetic-2', 'Synthetic-2', 'Synthetic', 'scRNA-seq', 24),
+  Dataset('yeast-1', 'Yeast Network 1', 'Yeast', 'Bulk RNA-seq', 22),
+  Dataset('yeast-2', 'Yeast Network 2', 'Yeast', 'Bulk RNA-seq', 21),
 ];
 
 const geneLabels = [
@@ -359,8 +352,7 @@ const geneLabels = [
   'PRDM14','LEFTY1','NODAL','FGF4','LIN28A','T','EOMES','CER1','GSC','NANOS3','TFAP2C','SOX17','GATA6','PDGFRA','FOXA2'
 ];
 
-// Create nodes
-export const mockNetworkData = {
+export const NetworkData = {
   nodes: geneLabels.map((gene, idx) => ({
     id: `gene${idx + 1}`,
     label: gene,
@@ -368,38 +360,32 @@ export const mockNetworkData = {
   })),
 };
 
-// Create edges
-export const mockInferenceData = {
-  algorithms: mockAlgorithms,
+export const InferenceData2 = {
+  algorithms: Algorithms,
   edges: [] as any[],
 };
 
-// Randomly connect nodes
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Generate edges
-mockNetworkData.nodes.forEach(sourceNode => {
-  // Each node has 2–5 outgoing edges
+NetworkData.nodes.forEach(sourceNode => {
   const numEdges = getRandomInt(2, 5);
 
   for (let i = 0; i < numEdges; i++) {
-    const targetNode = mockNetworkData.nodes[getRandomInt(0, mockNetworkData.nodes.length - 1)];
-    if (targetNode.id === sourceNode.id) continue; // no self-loop
-    // Avoid duplicate edges
-    if (mockInferenceData.edges.some(e => e.source === sourceNode.id && e.target === targetNode.id)) continue;
+    const targetNode = NetworkData.nodes[getRandomInt(0, NetworkData.nodes.length - 1)];
+    if (targetNode.id === sourceNode.id) continue; 
+    if (InferenceData2.edges.some(e => e.source === sourceNode.id && e.target === targetNode.id)) continue;
 
     const edgeType = Math.random() < 0.5 ? 'activation' : 'repression';
 
-    // Generate random scores per algorithm
     const scores: Record<string, number> = {};
-    mockAlgorithms.forEach(algo => {
+    Algorithms.forEach(algo => {
       scores[algo] = parseFloat((Math.random()).toFixed(2));
     });
 
-    mockInferenceData.edges.push({
-      id: `edge-${mockInferenceData.edges.length + 1}`,
+    InferenceData2.edges.push({
+      id: `edge-${InferenceData2.edges.length + 1}`,
       source: sourceNode.id,
       target: targetNode.id,
       type: edgeType,
@@ -408,10 +394,8 @@ mockNetworkData.nodes.forEach(sourceNode => {
   }
 });
 
-// For debugging: print number of nodes and edges
-console.log(`Generated ${mockNetworkData.nodes.length} nodes and ${mockInferenceData.edges.length} edges`);
+console.log(`d ${NetworkData.nodes.length} nodes and ${InferenceData2.edges.length} edges`);
 
-// mockData.ts
 export type EdgeType = 'activation' | 'repression';
 
 export interface Node {
@@ -437,16 +421,13 @@ export interface Dataset {
   algorithms: string[];
 }
 
-// Algorithms
 const algorithms = ['GENIE3', 'SCENIC', 'PIDC', 'GRNBoost2'];
 
-// Random int helper
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Generate edges with type and algorithm scores
-function generateEdges(nodes: Node[], numEdges: number): Edge[] {
+function Edges(nodes: Node[], numEdges: number): Edge[] {
   const edges: Edge[] = [];
   const n = nodes.length;
 
@@ -499,7 +480,7 @@ function getGenePool(datasetId: string): string[] {
   return datasetGenePools.hESC; // default human stem-like
 }
 
-function generateNodes(
+function Nodes(
   dataset: Dataset,
   edges: Edge[]
 ): Node[] {
@@ -514,7 +495,7 @@ function generateNodes(
   const selectedGenes = pool.slice(0, nodeCount);
 
   const nodes: Node[] = selectedGenes.map(gene => ({
-    id: gene,          // 🔥 REALISTIC ID
+    id: gene,
     label: gene,
     degree: 0,
     neighbors: [],
@@ -522,9 +503,7 @@ function generateNodes(
     bestMean: 0
   }));
 
-  // -----------------------
-  // Compute neighbors + degree
-  // -----------------------
+
   nodes.forEach(node => {
 
     const relatedEdges = edges.filter(
@@ -538,9 +517,6 @@ function generateNodes(
     node.neighbors = neighbors;
     node.degree = neighbors.length;
 
-    // -----------------------
-    // Compute best algorithm
-    // -----------------------
     const algoScores: Record<string, number[]> = {};
 
     relatedEdges.forEach(edge => {
@@ -570,7 +546,7 @@ function generateNodes(
   return nodes;
 }
 
-export const mockPerformanceMetrics: PerformanceMetrics[] = [
+export const PerformanceMetrics: PerformanceMetrics[] = [
   {
     algorithmId: 'alg1',
     algorithmName: 'GENIE3',
@@ -717,7 +693,7 @@ export const mockPerformanceMetrics: PerformanceMetrics[] = [
   }
 ];
 
-export const mockJobs: Job[] = [
+export const Jobs: Job[] = [
   {
     id: 'job1',
     datasetId: 'ds1',
@@ -764,7 +740,7 @@ export const mockJobs: Job[] = [
 ];
 
 export function getAUPRCDistributionData() {
-  return mockPerformanceMetrics.map(m => ({
+  return PerformanceMetrics.map(m => ({
     name: m.algorithmName,
     auprc: m.auprc,
     auroc: m.auroc,
@@ -773,7 +749,7 @@ export function getAUPRCDistributionData() {
 }
 
 export function getPRCurveData(algorithmId: string) {
-  // Generate mock Precision-Recall curve data
+  //   Precision-Recall curve data
   const points = [];
   for (let recall = 0; recall <= 1; recall += 0.1) {
     const precision = 0.8 - recall * 0.3 + Math.random() * 0.1;
@@ -783,7 +759,7 @@ export function getPRCurveData(algorithmId: string) {
 }
 
 export function getROCCurveData(algorithmId: string) {
-  // Generate mock ROC curve data
+  //   ROC curve data
   const points = [];
   for (let fpr = 0; fpr <= 1; fpr += 0.1) {
     const tpr = fpr + 0.2 + Math.random() * 0.1;
@@ -792,7 +768,7 @@ export function getROCCurveData(algorithmId: string) {
   return points;
 }
 
-export const mockDatasets2: Dataset[] = [
+export const Datasets2: Dataset[] = [
   {
     id: 'dyn-BF',
     name: 'Dynamic BF',
@@ -874,9 +850,7 @@ export const mockDatasets2: Dataset[] = [
 ];
 
 export const allDatasets = [
-  // -------------------------
-  // Curated Ground-Truth GRNs
-  // -------------------------
+
   {
     id: 'GSD',
     name: 'GSD',
@@ -1014,9 +988,7 @@ export const allDatasets = [
     sparklineData: [20, 22, 25, 26, 27, 23, 26, 24, 28, 24]
   },
 
-  // -------------------------
-  // Synthetic Dynamic Networks
-  // -------------------------
+
   {
     id: 'dyn-LL',
     name: 'Dynamic LL',

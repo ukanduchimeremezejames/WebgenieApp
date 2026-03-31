@@ -11,6 +11,9 @@ import { Button } from './../components/ui/button';
 import { Download, FileJson, FileText } from 'lucide-react';
 import { Dataset } from '../types';
 
+const API_BASE = "https://ukandu-webgenie-api.hf.space";
+
+
 interface DatasetDetailModalProps {
   dataset: Dataset | null;
   open: boolean;
@@ -129,7 +132,7 @@ export function DatasetDetailModal({
                 <span className="text-muted-foreground">Type</span>
               </div>
 
-              {/* Mock Data */}
+              {/*  Data */}
               {[
                 'GENE1 → GENE2 (Activation)',
                 'GENE2 → GENE3 (Repression)',
